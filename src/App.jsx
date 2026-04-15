@@ -2,6 +2,7 @@ import "./App.css";
 import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/react";
 import ThemeProvider from "./components/ThemeProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useAuthStore from "./store/authstore";
@@ -66,6 +67,7 @@ function App() {
           zIndex: 9999,
         }}
       />
+      <Analytics />
       <Routes>
         {" "}
         {/*  Public Routes */}
