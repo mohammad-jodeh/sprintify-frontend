@@ -30,8 +30,12 @@ class SocketService {
     }
 
     try {
+      // Use environment variable for Socket.IO URL, matching the REST API backend
+      const socketUrl = import.meta.env.VITE_API_BASE_URL 
+        ? import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '') // Remove API path
+        : 'http://localhost:8080';
       
-      this.socket = io('http://localhost:4000', {
+      this.socket = io(socketUrl, {
         auth: {
           token: token
         },
