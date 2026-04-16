@@ -31,8 +31,13 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
     const newSocket = io(import.meta.env.VITE_API_URL, {
       auth: { token },
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionDelay: 500, // Start reconnecting after 500ms (was 1000ms)
+      reconnectionDelayMax: 3000, // Max wait time (was 5000ms)
+      reconnectionAttempts: Infinity, // Keep trying forever
+      transports: ["websocket", "polling"], // Try WebSocket first, fall back to polling
+      // Polling configuration for better reliability
+      pollingInterval: 10000, // Poll every 10s
+      pollingTimeout: 40000, // Wait up to 40s for poll response
     });
 
     newSocket.on("connect", () => {
