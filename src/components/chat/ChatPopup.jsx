@@ -16,6 +16,12 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
   const [showNewChannelModal, setShowNewChannelModal] = useState(false);
   const [newChannelName, setNewChannelName] = useState("");
   const messagesEndRef = useRef(null);
+  const selectedChannelRef = useRef(null); // Ref to track current channel for socket listener
+
+  // Update ref whenever selectedChannel changes
+  useEffect(() => {
+    selectedChannelRef.current = selectedChannel;
+  }, [selectedChannel]);
 
   // Initialize Socket.IO connection
   useEffect(() => {
@@ -37,10 +43,11 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
     });
 
     newSocket.on("message-received", (data) => {
-      console.log("Message received:", data);
-      setMessages((prev) => {
-        // Only add if it's for the current channel and not a duplicate
-        if (data.channelId === selectedChannel?.id) {
+      console.log("Message received for channel:", data.channelId, "Current channel:", selectedChannelRef.current?.id);
+      
+      // Only add if it's for the current channel and not a duplicate
+      if (data.channelId === selectedChannelRef.current?.id) {
+        setMessages((prev) => {
           const messageExists = prev.some((m) => m.id === data.id);
           if (!messageExists) {
             const newMessage = {
@@ -48,14 +55,15 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
               ...data,
               createdAt: data.createdAt || new Date().toISOString(),
             };
+            console.log("Socket: Adding message from other user:", newMessage);
             // Sort messages by createdAt ascending (oldest first)
             return [...prev, newMessage].sort(
               (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
             );
           }
-        }
-        return prev;
-      });
+          return prev;
+        });
+      }
     });
 
     newSocket.on("disconnect", () => {
@@ -85,6 +93,19 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
     fetchChannels();
   }, [projectId]);
 
+  // Join/leave channel rooms when selected channel changes
+  useEffect(() => {
+    if (!socket || !selectedChannel) return;
+
+    console.log("Joining channel:", selectedChannel.id);
+    socket.emit("join-channel", selectedChannel.id);
+
+    return () => {
+      console.log("Leaving channel:", selectedChannel.id);
+      socket.emit("leave-channel", selectedChannel.id);
+    };
+  }, [socket, selectedChannel]);
+
   // Fetch messages when channel changes
   useEffect(() => {
     if (!selectedChannel || !socket) return;
@@ -107,12 +128,10 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           );
           setMessages(messagesArray);
+          console.log("Loaded messages for channel:", selectedChannel.id, messagesArray.length, "messages");
         } else {
           setMessages([]);
         }
-        
-        // Join channel for real-time updates
-        socket.emit("join-channel", selectedChannel.id);
       } catch (error) {
         console.error("Failed to fetch messages:", error);
         setMessages([]);
