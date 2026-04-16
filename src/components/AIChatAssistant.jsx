@@ -110,14 +110,14 @@ const AIChatAssistant = ({ projectId, isOpen, onClose }) => {
       const [project, epicsData, membersData, sprintsData, columnsData] =
         await Promise.all([
           fetchProjectById(projectId),
-          fetchEpics({ projectId }),
+          fetchEpics(projectId),
           getProjectMembers(projectId),
           fetchSprints(projectId),
           fetchBoardColumns(projectId),
         ]);
 
       // Get all statuses for the project
-      const allStatuses = await fetchStatuses({ projectId });
+      const allStatuses = await fetchStatuses(projectId);
       const columnIds = columnsData.map((col) => col.id);
       const projectStatuses = allStatuses.filter((status) =>
         columnIds.includes(status.columnId)
