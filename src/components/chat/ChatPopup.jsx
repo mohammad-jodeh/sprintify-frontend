@@ -136,20 +136,33 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
     setMessageInput(""); // Clear input immediately
 
     try {
+      console.log("Sending message to channel:", selectedChannel.id);
       const response = await sendChatMessage(selectedChannel.id, {
         content: messageContent,
       });
       
+      console.log("Message send response:", response);
+      
       // Immediately add sent message to state with optimistic update
-      if (response && response.data && response.data.id) {
+      if (response && response.data) {
         const newMessage = {
           id: response.data.id,
-          ...response.data,
+          authorId: response.data.authorId || user?.id,
+          author: response.data.author || user,
+          content: response.data.content,
           createdAt: response.data.createdAt || new Date().toISOString(),
+          isEdited: response.data.isEdited || false,
         };
-        setMessages((prev) => [...prev, newMessage].sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        ));
+        console.log("Adding new message:", newMessage);
+        setMessages((prev) => {
+          const updated = [...prev, newMessage].sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          );
+          console.log("Messages after send:", updated);
+          return updated;
+        });
+      } else {
+        console.error("No message data in response:", response);
       }
     } catch (error) {
       console.error("Failed to send message:", error);
