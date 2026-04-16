@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import BoardHeader from "./BoardHeader";
 import BoardContent from "./BoardContent";
 import SprintBoard from "./SprintBoard";
@@ -6,6 +6,8 @@ import { useBoardStore } from "../../store/boardStore";
 import { useProjectRole } from "../../hooks/useProjectRole";
 import { can, PERMISSIONS } from "../../utils/permission";
 import { updateTask } from "../../api/tasks";
+import { fetchBoardColumns } from "../../api/boardColumns";
+import socketService from "../../services/socket";
 
 const Board = ({
   boardData,
@@ -24,15 +26,8 @@ const Board = ({
   const storeFilters = useBoardStore((state) => state.filters);
   const storeSetFilters = useBoardStore((state) => state.setFilters);
 
-  // Add view toggle state - will be updated based on active sprints
+  // Add view toggle state - Kanban is now the default main view
   const [viewMode, setViewMode] = useState("kanban");
-
-  // Update view mode when active sprints change - default to sprint view when active sprints exist
-  useEffect(() => {
-    if (activeSprints && activeSprints.length > 0) {
-      setViewMode("sprint");
-    }
-  }, [activeSprints]);
 
   // Use props if provided, otherwise fall back to store
   const board = useMemo(() => {
@@ -110,53 +105,119 @@ const Board = ({
   useEffect(() => {
     setIsAnimated(true);
   }, []);
+
+  // ===== SETUP REAL-TIME SOCKET.IO LISTENERS =====
+  useEffect(() => {
+    // Handler for issue updates
+    const handleIssueUpdate = (updatedIssue) => {
+      console.log("📝 Real-time issue update received:", updatedIssue);
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue.id === updatedIssue.id ? { ...issue, ...updatedIssue } : issue
+        )
+      );
+    };
+
+    // Handler for new issues
+    const handleNewIssue = (newIssue) => {
+      console.log("➕ Real-time new issue received:", newIssue);
+      setIssues((prev) => [...prev, newIssue]);
+    };
+
+    // Handler for deleted issues
+    const handleIssueDelete = (deletedIssueId) => {
+      console.log("🗑️ Real-time issue deleted:", deletedIssueId);
+      setIssues((prev) => prev.filter((issue) => issue.id !== deletedIssueId));
+    };
+
+    // Handler for status changes
+    const handleStatusChange = (issueData) => {
+      console.log("🔄 Real-time status change:", issueData);
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue.id === issueData.id
+            ? { ...issue, statusId: issueData.statusId }
+            : issue
+        )
+      );
+    };
+
+    // Handler for assignment changes
+    const handleAssignmentChange = (issueData) => {
+      console.log("👤 Real-time assignment change:", issueData);
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue.id === issueData.id
+            ? { ...issue, assignee: issueData.assignee }
+            : issue
+        )
+      );
+    };
+
+    // Register all callbacks with socket service
+    socketService.setOnIssueUpdated(handleIssueUpdate);
+    socketService.setOnIssueCreated(handleNewIssue);
+    socketService.setOnIssueDeleted(handleIssueDelete);
+    socketService.setOnIssueStatusChanged(handleStatusChange);
+    socketService.setOnIssueAssigned(handleAssignmentChange);
+
+    // Cleanup function: remove callbacks when component unmounts
+    return () => {
+      socketService.setOnIssueUpdated(null);
+      socketService.setOnIssueCreated(null);
+      socketService.setOnIssueDeleted(null);
+      socketService.setOnIssueStatusChanged(null);
+      socketService.setOnIssueAssigned(null);
+    };
+  }, [setIssues]);
+  // ===== END SOCKET.IO SETUP =====
   const activeFiltersCount =
     filters.selectedUsers.length +
     filters.selectedSprints.length +
     (filters.showUnassigned ? 1 : 0);
   const totalIssues = board.issues.length;
-  // Handler functions following SRP
-  const handleIssueCreated = (newIssue) => {
+  // Handler functions following SRP - memoized to prevent child re-renders
+  const handleIssueCreated = useCallback((newIssue) => {
     setIssues((prev) => [...prev, newIssue]);
-  };
-  const handleColumnCreated = (data) => {
+  }, [setIssues]);
+
+  const handleColumnCreated = useCallback(async (data) => {
     const { column, statuses: newStatuses } = data;
     setColumns((prev) => [...prev, column]);
     if (newStatuses && newStatuses.length > 0) {
       setStatuses((prev) => [...prev, ...newStatuses]);
     }
-  };
+    
+    // ⚡ Refetch columns from API to ensure they're properly loaded and ordered
+    // This prevents issues with newly created columns not appearing
+    try {
+      if (boardData?.id) {
+        const freshColumns = await fetchBoardColumns(boardData.id);
+        setColumns(freshColumns);
+      }
+    } catch (error) {
+      console.error('Failed to refresh columns after creation:', error);
+      // Keep the optimistic update even if refresh fails
+    }
+  }, [setColumns, setStatuses, boardData?.id]);
 
-  const handleColumnUpdated = (updatedColumn) => {
+  const handleColumnUpdated = useCallback((updatedColumn) => {
     setColumns((prev) =>
       prev.map((col) => (col.id === updatedColumn.id ? updatedColumn : col))
     );
-  };
-  const handleColumnDeleted = (columnId) => {
+  }, [setColumns]);
+
+  const handleColumnDeleted = useCallback((columnId) => {
     setColumns((prev) => prev.filter((col) => col.id !== columnId));
-    // Also remove statuses that belonged to this column
     setStatuses((prev) =>
       prev.filter((status) => status.columnId !== columnId)
     );
-  };
-  const handleAddIssue = () => {
-    // Add issue logic here
-  };
+  }, [setColumns, setStatuses]);
 
-  const handleSettings = () => {
-    // Settings logic here
-  };
-
-  const handleMore = () => {
-    // More actions logic here
-  };
-  // Handle moving issues between statuses
-  const handleMoveIssue = async (sourceStatusId, targetStatusId, issueId) => {
+  const handleMoveIssue = useCallback(async (sourceStatusId, targetStatusId, issueId) => {
     if (sourceStatusId === targetStatusId) return;
 
     try {
-      // Update the issue's status in the API
-      // updateTask requires: projectId, issueId, updates
       const projectId = board.project?.id;
       if (!projectId) {
         console.error("Project ID is not available");
@@ -165,7 +226,6 @@ const Board = ({
       
       await updateTask(projectId, issueId, { statusId: targetStatusId });
 
-      // Update the local state immediately to reflect the change
       if (setIssues) {
         setIssues((prevIssues) =>
           prevIssues.map((issue) =>
@@ -177,9 +237,8 @@ const Board = ({
       }
     } catch (error) {
       console.error("Failed to move issue:", error);
-      // You could add a toast notification here to inform the user of the error
     }
-  };
+  }, [board.project?.id, setIssues]);
 
   // Check if we have required data to render the board
   const hasRequiredData = board?.columns && board.columns.length > 0 && board.issues;
