@@ -41,14 +41,23 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
     });
 
     newSocket.on("connect", () => {
-      console.log("Chat connected:", newSocket.id);
-      if (selectedChannel) {
-        newSocket.emit("join-channel", selectedChannel.id);
+      console.log("🔌 Chat socket connected:", newSocket.id);
+      // Try to rejoin current channel after reconnect
+      if (selectedChannelRef.current) {
+        console.log("↪️ Rejoining channel after reconnect:", selectedChannelRef.current.id);
+        newSocket.emit("join-channel", selectedChannelRef.current.id);
       }
     });
 
     newSocket.on("message-received", (data) => {
-      console.log("Message received for channel:", data.channelId, "Current channel:", selectedChannelRef.current?.id);
+      console.log("📨 Message-received event triggered:", {
+        messageId: data.id,
+        channelId: data.channelId,
+        content: data.content,
+        authorId: data.authorId,
+        currentChannel: selectedChannelRef.current?.id,
+        isMatch: data.channelId === selectedChannelRef.current?.id
+      });
       
       // Only add if it's for the current channel and not a duplicate
       if (data.channelId === selectedChannelRef.current?.id) {
@@ -60,7 +69,7 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
               ...data,
               createdAt: data.createdAt || new Date().toISOString(),
             };
-            console.log("Socket: Adding message from other user:", newMessage);
+            console.log("✅ Socket: Adding message from other user:", newMessage);
             // Sort messages by createdAt ascending (oldest first)
             return [...prev, newMessage].sort(
               (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
@@ -68,6 +77,8 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
           }
           return prev;
         });
+      } else {
+        console.log("❌ Message from wrong channel or no current channel");
       }
     });
 
@@ -102,11 +113,11 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
   useEffect(() => {
     if (!socket || !selectedChannel) return;
 
-    console.log("Joining channel:", selectedChannel.id);
+    console.log("🚪 [CHANNEL-JOIN] Emitting join-channel:", selectedChannel.id);
     socket.emit("join-channel", selectedChannel.id);
 
     return () => {
-      console.log("Leaving channel:", selectedChannel.id);
+      console.log("🚪 [CHANNEL-LEAVE] Emitting leave-channel:", selectedChannel.id);
       socket.emit("leave-channel", selectedChannel.id);
     };
   }, [socket, selectedChannel]);
