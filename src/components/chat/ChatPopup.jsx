@@ -38,14 +38,24 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
 
     newSocket.on("message-received", (data) => {
       console.log("Message received:", data);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: data.id || Math.random(),
-          ...data,
-          createdAt: data.createdAt || new Date().toISOString(),
-        },
-      ]);
+      setMessages((prev) => {
+        // Only add if it's for the current channel and not a duplicate
+        if (data.channelId === selectedChannel?.id) {
+          const messageExists = prev.some((m) => m.id === data.id);
+          if (!messageExists) {
+            const newMessage = {
+              id: data.id || Math.random(),
+              ...data,
+              createdAt: data.createdAt || new Date().toISOString(),
+            };
+            // Sort messages by createdAt ascending (oldest first)
+            return [...prev, newMessage].sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
+          }
+        }
+        return prev;
+      });
     });
 
     newSocket.on("disconnect", () => {
@@ -77,18 +87,35 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
 
   // Fetch messages when channel changes
   useEffect(() => {
-    if (!selectedChannel) return;
+    if (!selectedChannel || !socket) return;
 
     const fetchMessages = async () => {
       try {
         setIsLoading(true);
         const response = await getChatMessages(selectedChannel.id);
-        console.log("Fetched messages:", response.data);
-        setMessages(response.data);
+        console.log("Fetched messages response:", response);
+        
+        // Extract messages array from response (could be nested or direct)
+        let messagesArray = Array.isArray(response.data) ? response.data : response;
+        if (messagesArray.data && Array.isArray(messagesArray.data)) {
+          messagesArray = messagesArray.data;
+        }
+        
+        // Ensure it's an array and sort by createdAt ascending (oldest first)
+        if (Array.isArray(messagesArray)) {
+          messagesArray = messagesArray.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          );
+          setMessages(messagesArray);
+        } else {
+          setMessages([]);
+        }
+        
         // Join channel for real-time updates
-        socket?.emit("join-channel", selectedChannel.id);
+        socket.emit("join-channel", selectedChannel.id);
       } catch (error) {
         console.error("Failed to fetch messages:", error);
+        setMessages([]);
       } finally {
         setIsLoading(false);
       }
@@ -105,13 +132,29 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedChannel) return;
 
+    const messageContent = messageInput;
+    setMessageInput(""); // Clear input immediately
+
     try {
-      await sendChatMessage(selectedChannel.id, {
-        content: messageInput,
+      const response = await sendChatMessage(selectedChannel.id, {
+        content: messageContent,
       });
-      setMessageInput("");
+      
+      // Immediately add sent message to state with optimistic update
+      if (response && response.data && response.data.id) {
+        const newMessage = {
+          id: response.data.id,
+          ...response.data,
+          createdAt: response.data.createdAt || new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, newMessage].sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        ));
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
+      // Re-populate input if send failed
+      setMessageInput(messageContent);
     }
   };
 
