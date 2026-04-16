@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import SideLinks from "../ui/SideLinks";
-import ChatSidebar from "../chat/ChatSidebar";
 
 export default function ProjectSidebar() {
   const { projectId } = useParams();
@@ -83,9 +82,6 @@ export default function ProjectSidebar() {
           />
         );
       })}
-
-      {/* Chat Section */}
-      <ChatSidebar projectId={projectId} />
     </nav>
   );
 }

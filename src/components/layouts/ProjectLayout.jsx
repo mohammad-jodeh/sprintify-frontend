@@ -5,6 +5,7 @@ import useAuthStore from "../../store/authstore";
 import ProjectSidebar from "../sidebars/ProjectSidebar";
 import NavbarProject from "../navbar/NavbarProject";
 import AIChatFloatingButton from "../AIChatFloatingButton";
+import ChatPopup from "../chat/ChatPopup";
 
 export default function ProjectLayout() {
   const { theme } = useThemeStore();
@@ -33,6 +34,9 @@ export default function ProjectLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Chat Popup */}
+      <ChatPopup projectId={useParams().projectId} />
 
       {/* AI Chat Floating Button */}
       <AIChatFloatingButton />
