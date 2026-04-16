@@ -26,29 +26,63 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
   // Initialize Socket.IO connection
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      console.warn("❌ [SOCKET-INIT] No token found - skipping Socket.IO connection");
+      return;
+    }
 
-    const newSocket = io(import.meta.env.VITE_API_URL, {
-      auth: { token },
-      reconnection: true,
-      reconnectionDelay: 500, // Start reconnecting after 500ms (was 1000ms)
-      reconnectionDelayMax: 3000, // Max wait time (was 5000ms)
-      reconnectionAttempts: Infinity, // Keep trying forever
-      transports: ["websocket", "polling"], // Try WebSocket first, fall back to polling
-      // Polling configuration for better reliability
-      pollingInterval: 10000, // Poll every 10s
-      pollingTimeout: 40000, // Wait up to 40s for poll response
-    });
+    let newSocket = null;
 
-    newSocket.on("connect", () => {
-      console.log("🔌 Chat socket connected:", newSocket.id);
-      console.log("📍 Socket connected to server successfully");
-      // Try to rejoin current channel after reconnect
-      if (selectedChannelRef.current) {
-        console.log("↪️ Rejoining channel after reconnect:", selectedChannelRef.current.id);
-        newSocket.emit("join-channel", selectedChannelRef.current.id);
-      }
-    });
+    // Determine the correct Socket.IO URL
+    // Remove /api/v1 path if present since Socket.IO uses root path
+    let socketUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+    if (socketUrl?.includes("/api/")) {
+      socketUrl = socketUrl.split("/api/")[0]; // Remove everything after /api/
+    }
+    if (!socketUrl) {
+      socketUrl = window.location.origin; // Fallback to current origin
+    }
+
+    console.log("🔌 [SOCKET-INIT] Connecting to URL:", socketUrl);
+    console.log("🔌 [SOCKET-INIT] Token:", token.substring(0, 20) + "...");
+
+    try {
+      newSocket = io(socketUrl, {
+        auth: { token },
+        reconnection: true,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 3000,
+        reconnectionAttempts: Infinity,
+        transports: ["websocket", "polling"],
+        pollingInterval: 10000,
+        pollingTimeout: 40000,
+      });
+
+      // Connection success handler
+      newSocket.on("connect", () => {
+        console.log("✅ [SOCKET-INIT] Connected successfully!");
+        console.log("🔌 Chat socket connected:", newSocket.id);
+        console.log("📍 Socket connected to server successfully");
+        // Try to rejoin current channel after reconnect
+        if (selectedChannelRef.current) {
+          console.log("↪️ Rejoining channel after reconnect:", selectedChannelRef.current.id);
+          newSocket.emit("join-channel", selectedChannelRef.current.id);
+        }
+      });
+
+      // Connection error handlers
+      newSocket.on("connect_error", (error) => {
+        console.error("❌ [SOCKET-ERROR] Connection error:", error.message);
+        console.error("❌ [SOCKET-ERROR] Error data:", error.data);
+      });
+
+      newSocket.on("error", (error) => {
+        console.error("❌ [SOCKET-ERROR] Socket error:", error);
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        console.warn("⚠️ [SOCKET] Disconnected. Reason:", reason);
+      });
 
     // CRITICAL: Add ALL event listeners to test connectivity
     newSocket.on("user-joined", (data) => {
@@ -99,12 +133,18 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
       }
     });
 
-    newSocket.on("disconnect", () => {
-      console.log("Chat disconnected");
-    });
-
+    // Set socket state and cleanup on unmount
     setSocket(newSocket);
-    return () => newSocket.disconnect();
+    console.log("✅ [SOCKET-INIT] Socket state updated, listeners registered");
+
+    } catch (err) {
+      console.error("❌ [SOCKET-INIT] Failed to initialize Socket.IO:", err);
+    }
+
+    return () => {
+      console.log("🧹 [SOCKET] Cleaning up socket connection on unmount");
+      newSocket?.disconnect();
+    };
   }, []);
 
   // Fetch channels on component mount
