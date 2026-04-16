@@ -42,10 +42,27 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
 
     newSocket.on("connect", () => {
       console.log("🔌 Chat socket connected:", newSocket.id);
+      console.log("📍 Socket connected to server successfully");
       // Try to rejoin current channel after reconnect
       if (selectedChannelRef.current) {
         console.log("↪️ Rejoining channel after reconnect:", selectedChannelRef.current.id);
         newSocket.emit("join-channel", selectedChannelRef.current.id);
+      }
+    });
+
+    // CRITICAL: Add ALL event listeners to test connectivity
+    newSocket.on("user-joined", (data) => {
+      console.log("👥 User joined event:", data);
+    });
+
+    newSocket.on("user-left", (data) => {
+      console.log("👤 User left event:", data);
+    });
+
+    // Listen for ANY message events
+    newSocket.onAny((eventName, ...args) => {
+      if (eventName !== "ping") { // Ignore ping events
+        console.log(`🎵 [ANY-EVENT] Event name: "${eventName}", data:`, args);
       }
     });
 
@@ -111,14 +128,20 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
 
   // Join/leave channel rooms when selected channel changes
   useEffect(() => {
-    if (!socket || !selectedChannel) return;
+    if (!socket || !selectedChannel) {
+      console.log("⚠️ Cannot join channel - socket:", !!socket, "selectedChannel:", !!selectedChannel);
+      return;
+    }
 
     console.log("🚪 [CHANNEL-JOIN] Emitting join-channel:", selectedChannel.id);
+    console.log("🔍 [DEBUG] Socket ID:", socket.id, "Socket connected:", socket.connected);
     socket.emit("join-channel", selectedChannel.id);
+    console.log("✅ [CHANNEL-JOIN] Emit completed");
 
     return () => {
       console.log("🚪 [CHANNEL-LEAVE] Emitting leave-channel:", selectedChannel.id);
       socket.emit("leave-channel", selectedChannel.id);
+      console.log("✅ [CHANNEL-LEAVE] Emit completed");
     };
   }, [socket, selectedChannel]);
 
