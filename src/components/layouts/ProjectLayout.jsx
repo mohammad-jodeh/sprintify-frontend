@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, useParams } from "react-router-dom";
 import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authstore";
@@ -9,6 +9,9 @@ import ChatPopup from "../chat/ChatPopup";
 
 export default function ProjectLayout() {
   const { theme } = useThemeStore();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const { projectId } = useParams();
+  
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50 dark:bg-background-dark">
       {/* Background overlay elements */}
@@ -27,7 +30,7 @@ export default function ProjectLayout() {
       <div className="flex flex-1 overflow-hidden relative z-10">
         {/* Sidebar */}
         <aside className="w-64 bg-white dark:bg-gradient-primary shadow-lg border-r border-gray-200 dark:border-gray-700">
-          <ProjectSidebar />
+          <ProjectSidebar isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} />
         </aside>{" "}
         {/* Page content area scrolls independently */}
         <main className="flex-1 overflow-y-auto text-gray-800 dark:text-gray-200">
@@ -36,7 +39,7 @@ export default function ProjectLayout() {
       </div>
 
       {/* Chat Popup */}
-      <ChatPopup projectId={useParams().projectId} />
+      {isChatOpen && <ChatPopup projectId={projectId} setIsChatOpen={setIsChatOpen} />}
 
       {/* AI Chat Floating Button */}
       <AIChatFloatingButton />

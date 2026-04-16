@@ -1,57 +1,24 @@
-/* Floating Button */
-.chat-floating-button {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 999;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  font-size: 24px;
-}
-
-.chat-floating-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.6);
-}
-
-.chat-floating-button:active {
-  transform: scale(0.95);
-}
-
-.chat-floating-button.open {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-/* Chat Popup Container */
+/* Chat Popup Container - Right side overlay panel */
 .chat-popup-container {
   position: fixed;
-  bottom: 80px;
-  right: 20px;
+  top: 60px;
+  right: 0;
+  bottom: 0;
   z-index: 998;
-  width: 480px;
-  height: 600px;
-  animation: slideUp 0.3s ease-out;
+  width: 420px;
+  max-width: 100%;
+  animation: slideInRight 0.3s ease-out;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes slideUp {
+@keyframes slideInRight {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateX(100%);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
 
