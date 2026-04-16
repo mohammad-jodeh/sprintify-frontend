@@ -106,8 +106,7 @@ const ChatPopup = ({ projectId, setIsChatOpen }) => {
     if (!messageInput.trim() || !selectedChannel) return;
 
     try {
-      await sendChatMessage({
-        channelId: selectedChannel.id,
+      await sendChatMessage(selectedChannel.id, {
         content: messageInput,
       });
       setMessageInput("");
