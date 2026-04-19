@@ -24,13 +24,18 @@ export default function CreateColumnModal({
           ? Math.max(...existingColumns.map((col) => col.order || 0)) + 1
           : 1;
 
+      console.log("📊 Creating column with name:", name, "order:", nextOrder);
+      
       // Create the column
       const columnResponse = await createBoardColumn(projectId, {
         name,
         order: nextOrder,
       });
 
-      const columnId = columnResponse.id || columnResponse.data?.id;
+      console.log("✅ Column response:", columnResponse);
+      
+      const columnId = columnResponse?.id || columnResponse?.data?.id;
+      console.log("📍 Column ID extracted:", columnId);
 
       // Automatically create a status with the same name as the column
       // and link it to the newly created column
@@ -39,17 +44,20 @@ export default function CreateColumnModal({
           await createStatus(
             {
               name: name.trim(),
+              type: "BACKLOG",
               columnId: columnId,
-              color: "#3B82F6", // Default blue color
-              type: "BACKLOG", // Default type
+              projectId: projectId, // Include projectId here (was missing!)
             },
             projectId
           );
+          console.log("✅ Status created successfully for column:", columnId);
         } catch (statusError) {
-          console.error("Failed to create status for column:", statusError);
+          console.error("❌ Failed to create status for column:", statusError);
           // Don't fail the entire operation if status creation fails
           toast.warn("Column created, but status creation failed. Please create the status manually in Settings.");
         }
+      } else {
+        console.warn("⚠️ Column created but no columnId returned");
       }
 
       toast.success("Column and status created successfully!");
@@ -57,12 +65,13 @@ export default function CreateColumnModal({
       onClose();
       setName("");
     } catch (error) {
-      console.error("Failed to create column:", error);
+      console.error("❌ Failed to create column:", error);
       toast.error("Failed to create column");
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <Portal>
       <Dialog open={open} onClose={onClose} className="relative z-[100000]">
