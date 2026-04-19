@@ -1,7 +1,7 @@
 import React from "react";
 import { ProjectTitle, BoardStats } from "./BoardStats";
 import FiltersSection from "./FiltersSection";
-import { LayoutGrid, Calendar, ArrowDownUp } from "lucide-react";
+import { LayoutGrid, Calendar, ArrowDownUp, Download } from "lucide-react";
 
 const BoardHeader = ({
   board,
@@ -16,6 +16,7 @@ const BoardHeader = ({
   availableSprints,
   viewMode,
   setViewMode,
+  onExportPDF,
 }) => {
   // Get selected sprint from filters
   const selectedSprint =
@@ -97,7 +98,15 @@ const BoardHeader = ({
               Sprints
             </button>
           </div>
-        </div>
+          {/* Export PDF Button */}
+          <button
+            onClick={onExportPDF}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
+            title="Export board as PDF"
+          >
+            <Download size={16} />
+            Export PDF
+          </button>        </div>
       </div>{" "}
       
       {/* Only show filters in kanban mode */}

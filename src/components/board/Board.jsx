@@ -7,6 +7,7 @@ import { useProjectRole } from "../../hooks/useProjectRole";
 import { can, PERMISSIONS } from "../../utils/permission";
 import { updateTask } from "../../api/tasks";
 import { fetchBoardColumns } from "../../api/boardColumns";
+import { exportBoardAsPDF } from "../../utils/exportBoardAsPDF";
 import socketService from "../../services/socket";
 
 const Board = ({
@@ -274,6 +275,15 @@ const Board = ({
     }
   }, [board.project?.id, setIssues]);
 
+  const handleExportBoardAsPDF = useCallback(async () => {
+    try {
+      const projectName = board.project?.name || "Board";
+      await exportBoardAsPDF(projectName, board.columns, filteredIssues);
+    } catch (error) {
+      console.error("Failed to export board as PDF:", error);
+    }
+  }, [board.project?.name, board.columns, filteredIssues]);
+
   // Check if we have required data to render the board
   const hasRequiredData = board?.columns && board.columns.length > 0 && board.issues;
   
@@ -313,19 +323,21 @@ const Board = ({
           availableSprints={activeSprints || []}
           viewMode={viewMode}
           setViewMode={setViewMode}
+          onExportPDF={handleExportBoardAsPDF}
         />
         
         {/* Board Content - Conditional based on view mode */}
-        {viewMode === "sprint" ? (
-          <SprintBoard
-            issues={board.issues || []}
-            setIssues={setIssues}
-            activeSprints={activeSprints || []}
-            onIssueClick={onIssueClick}
-            projectId={boardData?.id}
-          />
-        ) : (
-          <BoardContent
+        <div id="board-content">
+          {viewMode === "sprint" ? (
+            <SprintBoard
+              issues={board.issues || []}
+              setIssues={setIssues}
+              activeSprints={activeSprints || []}
+              onIssueClick={onIssueClick}
+              projectId={boardData?.id}
+            />
+          ) : (
+            <BoardContent
             board={board}
             isAnimated={isAnimated}
             canConfigureBoard={canConfigureBoard}
@@ -341,7 +353,8 @@ const Board = ({
             filters={filters}
             activeSprints={activeSprints}
           />
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
