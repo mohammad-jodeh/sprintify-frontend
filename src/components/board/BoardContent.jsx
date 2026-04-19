@@ -1,6 +1,7 @@
 import React, { useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
 import Column from "./Column/Column";
-import CreateColumn from "./Column/CreateColumn";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { useColumnReorder } from "../../hooks/useColumnReorder";
 import { useBoardStore } from "../../store/boardStore";
@@ -21,6 +22,7 @@ const BoardContent = ({
   filters,
   activeSprints,
 }) => {
+  const navigate = useNavigate();
   const boardContentRef = useRef(null);
   const { reorderColumns } = useBoardStore();
 
@@ -107,12 +109,21 @@ const BoardContent = ({
           </div>
         ))}
         {canConfigureBoard && (
-          <CreateColumn
-            projectId={board.project?.id}
-            onColumnCreated={onColumnCreated}
-            isAnimated={isAnimated}
-            animationDelay={board.columns.length * 150}
-          />
+          <div className="flex items-end">
+            <button
+              onClick={() => navigate(`/projects/${board.project?.id}/settings`)}
+              className="flex flex-col items-center justify-center w-80 h-auto p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300 group cursor-pointer"
+              title="Go to Settings to manage columns"
+            >
+              <Plus size={32} className="text-blue-500 group-hover:text-blue-600 transition-colors mb-2" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+                Manage Columns
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
+                Go to Settings
+              </span>
+            </button>
+          </div>
         )}
       </div>
     </div>
