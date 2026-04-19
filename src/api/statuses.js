@@ -34,8 +34,20 @@ export const fetchStatusById = async (id, projectId) => {
 
 export const createStatus = async (status, projectId) => {
   if (projectId) {
-    const response = await protectedApi.post(`/${projectId}/status`, status);
-    return response.data.data?.status || response.data.status || response.data;
+    console.log("📝 [CREATE-STATUS] Sending status creation request:", { projectId, statusData: status });
+    try {
+      const response = await protectedApi.post(`/${projectId}/status`, status);
+      console.log("📝 [CREATE-STATUS] Full response received:", response.data);
+      const result = response.data.data?.status || response.data.status || response.data;
+      console.log("✅ [CREATE-STATUS] Extracted result:", result);
+      return result;
+    } catch (error) {
+      console.error("❌ [CREATE-STATUS] Error:", error.message);
+      if (error.response?.data) {
+        console.error("❌ [CREATE-STATUS] Error response data:", error.response.data);
+      }
+      throw error;
+    }
   } else {
     throw new Error('Project ID is required to create status');
   }
