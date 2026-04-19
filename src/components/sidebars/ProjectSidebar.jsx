@@ -8,12 +8,11 @@ import {
   Settings,
   Users,
   BarChart2,
-  MessageCircle,
 } from "lucide-react";
 
 import SideLinks from "../ui/SideLinks";
 
-export default function ProjectSidebar({ isChatOpen, setIsChatOpen }) {
+export default function ProjectSidebar() {
   const { projectId } = useParams();
   // Project sidebar links
   const links = [
@@ -84,18 +83,7 @@ export default function ProjectSidebar({ isChatOpen, setIsChatOpen }) {
         );
       })}
 
-      {/* Chat Button */}
-      <button
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        className={`w-full mt-4 flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${ 
-          isChatOpen
-            ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
-            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-        }`}
-      >
-        <MessageCircle className="h-5 w-5" />
-        <span className="font-medium text-sm">Chat</span>
-      </button>
+
     </nav>
   );
 }

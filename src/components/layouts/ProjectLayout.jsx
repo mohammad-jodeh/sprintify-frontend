@@ -4,12 +4,9 @@ import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authstore";
 import ProjectSidebar from "../sidebars/ProjectSidebar";
 import NavbarProject from "../navbar/NavbarProject";
-import AIChatFloatingButton from "../AIChatFloatingButton";
-import ChatPopup from "../chat/ChatPopup";
 
 export default function ProjectLayout() {
   const { theme } = useThemeStore();
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const { projectId } = useParams();
   
   return (
@@ -30,7 +27,7 @@ export default function ProjectLayout() {
       <div className="flex flex-1 overflow-hidden relative z-10">
         {/* Sidebar */}
         <aside className="w-64 bg-white dark:bg-gradient-primary shadow-lg border-r border-gray-200 dark:border-gray-700">
-          <ProjectSidebar isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} />
+          <ProjectSidebar />
         </aside>{" "}
         {/* Page content area scrolls independently */}
         <main className="flex-1 overflow-y-auto text-gray-800 dark:text-gray-200">
@@ -38,11 +35,7 @@ export default function ProjectLayout() {
         </main>
       </div>
 
-      {/* Chat Popup */}
-      {isChatOpen && <ChatPopup projectId={projectId} setIsChatOpen={setIsChatOpen} />}
 
-      {/* AI Chat Floating Button */}
-      <AIChatFloatingButton />
     </div>
   );
 }
