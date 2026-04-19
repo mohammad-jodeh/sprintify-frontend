@@ -39,8 +39,19 @@ const getIssueTypeBadge = (type) => {
 /**
  * Export the board view as a PDF with professional layout
  */
-export const exportBoardAsPDF = async (projectName, columns, issues, members = [], fileName = null) => {
+export const exportBoardAsPDF = async (projectName, columns = [], issues = [], members = [], fileName = null) => {
   try {
+    // Validate input data
+    if (!Array.isArray(columns) || columns.length === 0) {
+      console.error('No columns available for export');
+      return;
+    }
+
+    if (!Array.isArray(issues)) {
+      console.error('Issues must be an array');
+      return;
+    }
+
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
@@ -115,13 +126,18 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
     pdf.setFont(undefined, 'normal');
 
     columns.forEach((column, idx) => {
-      const columnIssues = issues.filter(issue => issue.statusId && 
-        column.statuses?.some(s => s.id === issue.statusId)
+      if (!column || !Array.isArray(column.statuses)) {
+        return;
+      }
+      
+      const columnIssues = issues.filter(issue => 
+        issue && issue.statusId && 
+        column.statuses.some(s => s && s.id === issue.statusId)
       );
-      const storyPoints = columnIssues.reduce((sum, issue) => sum + (issue.storyPoint || 0), 0);
+      const storyPoints = columnIssues.reduce((sum, issue) => sum + (issue?.storyPoint || 0), 0);
       
       const colNum = `${idx + 1}.`;
-      const colName = column.name;
+      const colName = column.name || 'Untitled Column';
       const stats = `${columnIssues.length} issues • ${storyPoints}pts`;
       
       pdf.text(colNum, margin, yPosition);
@@ -144,10 +160,15 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
     yPosition += 8;
 
     // Process columns with better layout
-    columns.forEach((colIdx, colPosition) => {
-      const column = columns[colIdx];
-      const columnIssues = issues.filter(issue => issue.statusId && 
-        column.statuses?.some(s => s.id === issue.statusId)
+    columns.forEach((column) => {
+      // Validate column has statuses array
+      if (!column || !Array.isArray(column.statuses)) {
+        return;
+      }
+      
+      const columnIssues = issues.filter(issue => 
+        issue && issue.statusId && 
+        column.statuses.some(s => s && s.id === issue.statusId)
       );
 
       // Check if we need a new page
@@ -166,7 +187,9 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
       pdf.setFont(undefined, 'bold');
       pdf.text(column.name, margin + 4, yPosition + 6.5);
 
-      const storyPoints = columnIssues.reduce((sum, issue) => sum + (issue.storyPoint || 0), 0);
+      const storyPoints = columnIssues.reduce((sum, issue) => 
+        sum + (issue?.storyPoint || 0), 0
+      );
       pdf.setFontSize(9);
       pdf.text(`${columnIssues.length} issues • ${storyPoints}pts`, pageWidth - margin - 40, yPosition + 6.5);
 
@@ -177,9 +200,12 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
       pdf.setFontSize(9);
       
       columnIssues.slice(0, 20).forEach((issue, issueIdx) => {
-        if (yPosition > pageHeight - 20) {
-          pdf.addPage();
-          yPosition = margin;
+        if (!issue || yPosition > pageHeight - 20) {
+          if (yPosition > pageHeight - 20) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          if (!issue) return;
         }
 
         // Issue background
@@ -189,8 +215,8 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
         }
 
         // Issue type and priority indicator
-        const typeIcon = getIssueTypeBadge(issue.issueType);
-        const priorityColor = getPriorityColor(issue.issuePriority);
+        const typeIcon = getIssueTypeBadge(issue?.issueType);
+        const priorityColor = getPriorityColor(issue?.issuePriority);
         
         // Priority bar
         pdf.setFillColor(priorityColor.r, priorityColor.g, priorityColor.b);
@@ -198,7 +224,7 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
 
         // Issue content
         pdf.setFont(undefined, 'bold');
-        const title = `${typeIcon} ${issue.title}`.substring(0, 60);
+        const title = `${typeIcon} ${issue?.title || 'Untitled'}`.substring(0, 60);
         pdf.text(title, margin + 6, yPosition + 2);
 
         // Details row
@@ -206,9 +232,9 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
         pdf.setFontSize(8);
         pdf.setTextColor(100, 100, 100);
 
-        const assigneeName = getUserName(issue.assignee, members);
-        const priority = issue.issuePriority ? `${issue.issuePriority}` : 'Normal';
-        const points = issue.storyPoint ? `${issue.storyPoint}pts` : '';
+        const assigneeName = getUserName(issue?.assignee, members);
+        const priority = issue?.issuePriority ? `${issue.issuePriority}` : 'Normal';
+        const points = issue?.storyPoint ? `${issue.storyPoint}pts` : '';
 
         let detailText = `👤 ${assigneeName}`;
         if (points) detailText += ` | 📊 ${points}`;
@@ -262,6 +288,8 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
 
     // Issue rows
     issues.forEach((issue, idx) => {
+      if (!issue) return;
+      
       if (yPosition > pageHeight - 15) {
         pdf.addPage();
         yPosition = margin;
@@ -279,16 +307,16 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
       pdf.text(`${idx + 1}`, margin + 2, yPosition + 1);
       
       // Title (truncated)
-      const title = issue.title?.substring(0, 50) || '-';
+      const title = issue?.title?.substring(0, 50) || '-';
       pdf.text(title, margin + 8, yPosition + 1);
       
       // Type
-      const type = issue.issueType || '-';
+      const type = issue?.issueType || '-';
       pdf.text(type, margin + 85, yPosition + 1);
       
       // Priority with color
-      const priority = issue.issuePriority || '-';
-      const color = getPriorityColor(issue.issuePriority);
+      const priority = issue?.issuePriority || '-';
+      const color = getPriorityColor(issue?.issuePriority);
       pdf.setTextColor(color.r, color.g, color.b);
       pdf.setFont(undefined, 'bold');
       pdf.text(priority, margin + 110, yPosition + 1);
@@ -297,11 +325,11 @@ export const exportBoardAsPDF = async (projectName, columns, issues, members = [
       pdf.setFont(undefined, 'normal');
       
       // Assignee name
-      const assignee = getUserName(issue.assignee, members);
+      const assignee = getUserName(issue?.assignee, members);
       pdf.text(assignee, margin + 140, yPosition + 1);
       
       // Story points
-      const points = issue.storyPoint ? `${issue.storyPoint}` : '-';
+      const points = issue?.storyPoint ? `${issue.storyPoint}` : '-';
       pdf.text(points, margin + 200, yPosition + 1);
 
       yPosition += 8;
