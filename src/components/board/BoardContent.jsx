@@ -1,7 +1,7 @@
-import React, { useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useRef, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
 import Column from "./Column/Column";
+import CreateColumnModal from "./CreateColumnModal";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { useColumnReorder } from "../../hooks/useColumnReorder";
 import { useBoardStore } from "../../store/boardStore";
@@ -22,9 +22,9 @@ const BoardContent = ({
   filters,
   activeSprints,
 }) => {
-  const navigate = useNavigate();
   const boardContentRef = useRef(null);
   const { reorderColumns } = useBoardStore();
+  const [isCreateColumnModalOpen, setIsCreateColumnModalOpen] = useState(false);
 
   // Column reordering functionality
   const handleColumnReorder = async (newColumnOrder) => {
@@ -109,19 +109,31 @@ const BoardContent = ({
           </div>
         ))}
         {canConfigureBoard && (
-          <button
-            onClick={() => navigate(`/projects/${board.project?.id}/settings`)}
-            className="flex flex-col items-center justify-center w-80 min-h-[600px] p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/20 dark:hover:to-blue-800/20 transition-all duration-300 group cursor-pointer"
-            title="Go to Settings to manage columns"
-          >
-            <Plus size={40} className="text-gray-400 group-hover:text-blue-500 transition-colors mb-3" />
-            <span className="text-base font-semibold text-gray-600 dark:text-gray-300 text-center">
-              Manage Columns
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-              Click to create or edit columns
-            </span>
-          </button>
+          <>
+            <button
+              onClick={() => setIsCreateColumnModalOpen(true)}
+              className="flex flex-col items-center justify-center w-80 min-h-[600px] p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/20 dark:hover:to-blue-800/20 transition-all duration-300 group cursor-pointer"
+              title="Create a new column"
+            >
+              <Plus size={40} className="text-gray-400 group-hover:text-blue-500 transition-colors mb-3" />
+              <span className="text-base font-semibold text-gray-600 dark:text-gray-300 text-center">
+                Add Column
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                Click to create a new column
+              </span>
+            </button>
+
+            <CreateColumnModal
+              open={isCreateColumnModalOpen}
+              onClose={() => setIsCreateColumnModalOpen(false)}
+              onColumnCreated={() => {
+                // Refresh board data - can be handled by parent component
+                onColumnCreated?.();
+              }}
+              projectId={board.project?.id}
+            />
+          </>
         )}
       </div>
     </div>
