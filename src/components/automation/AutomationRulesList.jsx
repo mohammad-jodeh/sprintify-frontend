@@ -17,15 +17,22 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
   const loadRules = async () => {
     try {
       setLoading(true);
+      console.log("[AutomationRulesList] Loading rules for project:", projectId);
       const data = await automationAPI.getRules(projectId);
+      console.log("[AutomationRulesList] Received data:", data);
       // Ensure data is an array
-      setRules(Array.isArray(data) ? data : []);
+      const rulesArray = Array.isArray(data) ? data : [];
+      console.log("[AutomationRulesList] Setting rules to:", rulesArray);
+      setRules(rulesArray);
     } catch (error) {
-      // Silently handle 404 errors - backend may not have automation routes yet
+      console.error("[AutomationRulesList] Failed to load automation rules:", {
+        status: error.response?.status,
+        message: error.message,
+        error: error
+      });
+      // Show error to user unless it's a 404
       if (error.response?.status !== 404) {
-        console.error("Failed to load automation rules:", error);
-      } else {
-        console.warn("Automation routes not available on backend yet");
+        toast.error("Failed to load automation rules");
       }
       setRules([]);
     } finally {
@@ -47,11 +54,15 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
     try {
       if (selectedRule) {
         await automationAPI.updateRule(projectId, selectedRule.id, formData);
+        toast.success("Rule updated successfully");
       } else {
         await automationAPI.createRule(projectId, formData);
+        toast.success("Rule created successfully");
       }
       await loadRules();
+      setIsModalOpen(false);
     } catch (error) {
+      console.error("[AutomationRulesList] Failed to save rule:", error);
       toast.error("Failed to save rule");
       throw error;
     }

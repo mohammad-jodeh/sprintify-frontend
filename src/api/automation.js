@@ -7,7 +7,8 @@ export const getRules = async (projectId) => {
   const response = await protectedApi.get(
     `/projects/${projectId}/automation-rules`
   );
-  return response.data;
+  // Backend returns { message, data: [...] }
+  return response.data.data || response.data || [];
 };
 
 /**
@@ -17,7 +18,8 @@ export const getRule = async (projectId, ruleId) => {
   const response = await protectedApi.get(
     `/projects/${projectId}/automation-rules/${ruleId}`
   );
-  return response.data;
+  // Backend returns { message, data: {...} }
+  return response.data.data || response.data;
 };
 
 /**
@@ -28,7 +30,8 @@ export const createRule = async (projectId, data) => {
     `/projects/${projectId}/automation-rules`,
     data
   );
-  return response.data;
+  // Backend returns { message, data: {...} }
+  return response.data.data || response.data;
 };
 
 /**
@@ -39,7 +42,8 @@ export const updateRule = async (projectId, ruleId, data) => {
     `/projects/${projectId}/automation-rules/${ruleId}`,
     data
   );
-  return response.data;
+  // Backend returns { message, data: {...} }
+  return response.data.data || response.data;
 };
 
 /**
@@ -59,7 +63,8 @@ export const toggleRuleStatus = async (projectId, ruleId) => {
   const response = await protectedApi.patch(
     `/projects/${projectId}/automation-rules/${ruleId}/toggle`
   );
-  return response.data;
+  // Backend returns { message, data: {...} }
+  return response.data.data || response.data;
 };
 
 /**
@@ -69,6 +74,7 @@ export const getStats = async (projectId) => {
   const response = await protectedApi.get(
     `/projects/${projectId}/automation-rules-stats`
   );
-  return response.data;
+  // Backend returns { message, data: {...} } or just { ... }
+  return response.data.data || response.data;
 };
 
