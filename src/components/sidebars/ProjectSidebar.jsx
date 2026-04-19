@@ -8,6 +8,7 @@ import {
   Settings,
   Users,
   BarChart2,
+  Zap,
 } from "lucide-react";
 
 import SideLinks from "../ui/SideLinks";
@@ -46,6 +47,13 @@ export default function ProjectSidebar() {
       to: `/projects/${projectId}/team`,
       icon: <Users className="mr-3 h-6 w-6 text-gray-500 dark:text-gray-400" />,
       text: "Team",
+    },
+    {
+      to: `/projects/${projectId}/automation`,
+      icon: (
+        <Zap className="mr-3 h-6 w-6 text-gray-500 dark:text-gray-400" />
+      ),
+      text: "Automation",
     },
     {
       to: `/projects/${projectId}/settings`,
