@@ -25,19 +25,23 @@ const AutomationPage = () => {
       // Load statuses
       try {
         const statusesData = await statusAPI.fetchStatuses({ projectId });
-        setStatuses(statusesData || []);
+        setStatuses(Array.isArray(statusesData) ? statusesData : []);
       } catch (error) {
         console.error("Failed to load statuses:", error);
+        setStatuses([]);
       }
 
       // Load project members
       try {
         const projectData = await projectAPI.fetchProjectById(projectId);
-        if (projectData?.members) {
+        if (projectData?.members && Array.isArray(projectData.members)) {
           setUsers(projectData.members);
+        } else {
+          setUsers([]);
         }
       } catch (error) {
         console.error("Failed to load project members:", error);
+        setUsers([]);
       }
 
       // Load automation stats
@@ -145,7 +149,7 @@ const AutomationPage = () => {
       </div>
 
       {/* Rules List */}
-      <AutomationRulesList projectId={projectId} statuses={statuses} users={users} />
+      <AutomationRulesList projectId={projectId} statuses={Array.isArray(statuses) ? statuses : []} users={Array.isArray(users) ? users : []} />
     </div>
   );
 };

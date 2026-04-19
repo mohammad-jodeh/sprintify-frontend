@@ -18,7 +18,8 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
     try {
       setLoading(true);
       const data = await automationAPI.getRules(projectId);
-      setRules(data || []);
+      // Ensure data is an array
+      setRules(Array.isArray(data) ? data : []);
     } catch (error) {
       // Silently handle 404 errors - backend may not have automation routes yet
       if (error.response?.status !== 404) {
