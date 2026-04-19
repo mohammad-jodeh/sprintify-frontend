@@ -1,7 +1,6 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Board from "../../components/board/Board";
-import TeamCapacity from "../../components/board/TeamCapacity";
 import LoadingScreen from "../../components/ui/LoadingScreen";
 import { BoardSkeleton } from "../../components/ui/SkeletonLoader";
 import CreateEpicModal from "../../components/modals/CreateEpicModal";
@@ -38,19 +37,6 @@ const BoardPage = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [selectedEpic, setSelectedEpic] = useState(null);
   const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false);
-  const [showTeamCapacity, setShowTeamCapacity] = useState(false);
-
-  // Debug boardData structure
-  useEffect(() => {
-    if (boardData) {
-      console.log("📊 BoardData structure:", {
-        hasMembers: !!boardData.members,
-        memberCount: boardData.members?.length || 0,
-        members: boardData.members,
-        projectKeys: Object.keys(boardData).slice(0, 10)
-      });
-    }
-  }, [boardData]);
 
   // Epic management functions
   const handleCreateEpic = (newEpic) => {
@@ -148,40 +134,6 @@ const BoardPage = () => {
         epics={epics}
         onIssueClick={handleIssueClick}
       />
-      
-      {/* Team Capacity Toggle Button */}
-      <div className="px-6 mb-4 flex justify-center">
-        <button
-          onClick={() => {
-            console.log("Team Capacity button clicked", !showTeamCapacity);
-            setShowTeamCapacity(!showTeamCapacity);
-          }}
-          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2"
-          style={{
-            backgroundColor: showTeamCapacity ? "#6366f1" : "#4f46e5",
-            cursor: "pointer",
-            padding: "8px 16px"
-          }}
-        >
-          {showTeamCapacity ? "📊 Hide Team Capacity" : "👥 Show Team Capacity"}
-        </button>
-      </div>
-      
-      {/* Team Capacity View */}
-      {showTeamCapacity && boardData?.members && boardData.members.length > 0 && (
-        <div className="px-6">
-          <TeamCapacity 
-            issues={issues}
-            projectMembers={boardData.members}
-          />
-        </div>
-      )}
-      {showTeamCapacity && (!boardData?.members || boardData.members.length === 0) && (
-        <div className="px-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          ⚠️ No team members found in project. Members: {boardData?.members?.length || 0}
-        </div>
-      )}
-      
       {/* Modal Renders */}
       {searchParams.get("modal") === "create-epic" && (
         <CreateEpicModal
