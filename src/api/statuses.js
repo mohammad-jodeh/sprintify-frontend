@@ -6,7 +6,7 @@ export const fetchStatuses = async (params = {}) => {
   if (projectId) {
     // Use the project-specific endpoint
     console.log("🔍 [FETCH-STATUSES] Fetching statuses for projectId:", projectId, "with params:", otherParams);
-    const response = await protectedApi.get(`/${projectId}/status`, { params: otherParams });
+    const response = await protectedApi.get(`/${projectId}/statuses`, { params: otherParams });
     console.log("📦 [FETCH-STATUSES] Full response:", response.data);
     
     const statuses = response.data.data?.statuses || response.data.statuses || response.data;
@@ -25,7 +25,7 @@ export const fetchStatusTypeMap = async (projectId) => {
 
 export const fetchStatusById = async (id, projectId) => {
   if (projectId) {
-    const response = await protectedApi.get(`/${projectId}/status`, { params: { id } });
+    const response = await protectedApi.get(`/${projectId}/statuses`, { params: { id } });
     return response.data.data?.status || response.data.status || response.data;
   } else {
     throw new Error('Project ID is required to fetch status by ID');
@@ -36,7 +36,7 @@ export const createStatus = async (status, projectId) => {
   if (projectId) {
     console.log("📝 [CREATE-STATUS] Sending status creation request:", { projectId, statusData: status });
     try {
-      const response = await protectedApi.post(`/${projectId}/status`, status);
+      const response = await protectedApi.post(`/${projectId}/statuses`, status);
       console.log("📝 [CREATE-STATUS] Full response received:", response.data);
       const result = response.data.data?.status || response.data.status || response.data;
       console.log("✅ [CREATE-STATUS] Extracted result:", result);
@@ -55,7 +55,7 @@ export const createStatus = async (status, projectId) => {
 
 export const updateStatus = async (id, updates, projectId) => {
   if (projectId) {
-    const response = await protectedApi.patch(`/${projectId}/status`, updates);
+    const response = await protectedApi.patch(`/${projectId}/statuses`, updates);
     return response.data.data?.status || response.data.status || response.data;
   } else {
     throw new Error('Project ID is required to update status');
@@ -64,7 +64,7 @@ export const updateStatus = async (id, updates, projectId) => {
 
 export const deleteStatus = async (id, projectId) => {
   if (projectId) {
-    await protectedApi.delete(`/${projectId}/status/${id}`);
+    await protectedApi.delete(`/${projectId}/statuses/${id}`);
   } else {
     throw new Error('Project ID is required to delete status');
   }
