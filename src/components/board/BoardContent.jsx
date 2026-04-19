@@ -1,7 +1,5 @@
-import React, { useRef, useState, useCallback } from "react";
-import { Plus } from "lucide-react";
+import React, { useRef, useCallback } from "react";
 import Column from "./Column/Column";
-import CreateColumnModal from "./CreateColumnModal";
 import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { useColumnReorder } from "../../hooks/useColumnReorder";
 import { useBoardStore } from "../../store/boardStore";
@@ -24,7 +22,6 @@ const BoardContent = ({
 }) => {
   const boardContentRef = useRef(null);
   const { reorderColumns } = useBoardStore();
-  const [isCreateColumnModalOpen, setIsCreateColumnModalOpen] = useState(false);
 
   // Column reordering functionality
   const handleColumnReorder = async (newColumnOrder) => {
@@ -108,27 +105,6 @@ const BoardContent = ({
             />
           </div>
         ))}
-        {canConfigureBoard && (
-          <>
-            <button
-              onClick={() => setIsCreateColumnModalOpen(true)}
-              className="flex items-center justify-center w-16 h-16 rounded-lg bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-300 group cursor-pointer"
-              title="Create a new column"
-            >
-              <Plus size={24} className="text-white group-hover:scale-110 transition-transform" />
-            </button>
-
-            <CreateColumnModal
-              open={isCreateColumnModalOpen}
-              onClose={() => setIsCreateColumnModalOpen(false)}
-              onColumnCreated={() => {
-                // Refresh board data - can be handled by parent component
-                onColumnCreated?.();
-              }}
-              projectId={board.project?.id}
-            />
-          </>
-        )}
       </div>
     </div>
   );
