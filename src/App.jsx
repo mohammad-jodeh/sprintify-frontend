@@ -1,6 +1,6 @@
 import "./App.css";
 import { useEffect, lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import ThemeProvider from "./components/ThemeProvider";
@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import useAuthStore from "./store/authstore";
 import useNotificationStore from "./store/notificationStore";
 import socketService from "./services/socket";
+import { setAuthNavigationCallback } from "./api/config";
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -44,11 +45,18 @@ const Backlog = lazy(() => import("./pages/project/Backlog"));
 const Sprintspage = lazy(() => import("./pages/project/Sprintspage"));
 const Team = lazy(() => import("./pages/project/Team"));
 const Settings = lazy(() => import("./pages/project/Settings"));
+const AutomationPage = lazy(() => import("./pages/AutomationPage"));
 const Profile = lazy(() => import("./pages/Profile"));
 
 function App() {
+  const navigate = useNavigate();
   const { isAuthenticated, token } = useAuthStore();
   const { initializeSocket, cleanupSocket } = useNotificationStore();
+
+  // Set up authentication redirect callback
+  useEffect(() => {
+    setAuthNavigationCallback(navigate);
+  }, [navigate]);
   useEffect(() => {
     if (isAuthenticated && token) {
       socketService.connect();
@@ -118,6 +126,7 @@ function App() {
             <Route path="sprint" element={<Sprintspage />} />
             <Route path="team" element={<Team />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="automation" element={<AutomationPage />} />
           </Route>
 
           {/* Standalone Profile Route */}

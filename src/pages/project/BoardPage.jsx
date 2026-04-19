@@ -10,7 +10,6 @@ import IssueDetailsModal from "../../components/modals/IssueDetailsModal";
 // Custom hooks
 import { useBoardData } from "../../hooks/useBoardData";
 import { useProjectRole } from "../../hooks/useProjectRole";
-import { updateTask } from "../../api/tasks";
 import toast from "react-hot-toast";
 
 const BoardPage = () => {

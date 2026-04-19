@@ -53,6 +53,21 @@ protectedApi.interceptors.request.use((config) => {
 
 // Response interceptor for handling auth errors and retries
 let isRetrying = false;
+let navigationCallback = null;
+
+// Function to set navigation callback from React component
+export const setAuthNavigationCallback = (callback) => {
+  navigationCallback = callback;
+};
+
+const triggerLoginRedirect = () => {
+  if (navigationCallback) {
+    navigationCallback('/login');
+  } else {
+    // Fallback: dispatch event for app-level handler
+    window.dispatchEvent(new CustomEvent('auth-redirect', { detail: { path: '/login' } }));
+  }
+};
 
 protectedApi.interceptors.response.use(
   (response) => response,
@@ -66,17 +81,14 @@ protectedApi.interceptors.response.use(
       // Prevent infinite retry loops
       if (isRetrying) {
         useAuthStore.getState().clearAuth();
-        window.location.href = '/login';
+        triggerLoginRedirect();
         return Promise.reject(error);
       }
 
       isRetrying = true;
 
       try {
-        // Wait briefly for token to be available
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Try to get fresh token from store
+        // Try to get fresh token from store (no hardcoded wait)
         const freshToken = useAuthStore.getState().token;
 
         if (freshToken) {
@@ -97,14 +109,14 @@ protectedApi.interceptors.response.use(
       isRetrying = false;
       // Token not available, clear auth and redirect
       useAuthStore.getState().clearAuth();
-      window.location.href = '/login';
+      triggerLoginRedirect();
       return Promise.reject(error);
     }
 
     // For other errors or already retried requests
     if (error.response?.status === 401) {
       useAuthStore.getState().clearAuth();
-      window.location.href = '/login';
+      triggerLoginRedirect();
     }
     return Promise.reject(error);
   }
