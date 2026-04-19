@@ -112,16 +112,10 @@ const BoardContent = ({
           <>
             <button
               onClick={() => setIsCreateColumnModalOpen(true)}
-              className="flex flex-col items-center justify-center w-80 min-h-[600px] p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/20 dark:hover:to-blue-800/20 transition-all duration-300 group cursor-pointer"
+              className="flex items-center justify-center w-16 h-16 rounded-lg bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-300 group cursor-pointer"
               title="Create a new column"
             >
-              <Plus size={40} className="text-gray-400 group-hover:text-blue-500 transition-colors mb-3" />
-              <span className="text-base font-semibold text-gray-600 dark:text-gray-300 text-center">
-                Add Column
-              </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                Click to create a new column
-              </span>
+              <Plus size={24} className="text-white group-hover:scale-110 transition-transform" />
             </button>
 
             <CreateColumnModal

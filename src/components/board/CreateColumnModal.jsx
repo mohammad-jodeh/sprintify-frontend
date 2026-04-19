@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import { createBoardColumn } from "../../api/boardColumns";
+import { createBoardColumn, fetchBoardColumns } from "../../api/boardColumns";
 import { createStatus } from "../../api/statuses";
 import toast from "react-hot-toast";
 import Portal from "../ui/Portal";
@@ -27,10 +27,16 @@ export default function CreateColumnModal({
     try {
       console.log("📊 Creating column with name:", name.trim());
 
+      // Fetch existing columns to determine the next order
+      const existingColumns = await fetchBoardColumns(projectId);
+      const nextOrder = existingColumns.length > 0
+        ? Math.max(...existingColumns.map((col) => col.order || 0)) + 1
+        : 0;
+
       // Create the column
       const newColumn = await createBoardColumn(projectId, {
         name: name.trim(),
-        order: 0, // Order will be handled by Settings if needed
+        order: nextOrder,
       });
 
       console.log("✅ Column response:", newColumn);
