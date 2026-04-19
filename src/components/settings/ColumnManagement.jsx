@@ -62,7 +62,7 @@ const ColumnManagement = ({ projectId }) => {
           await createStatus(
             {
               name: newColumnName.trim(),
-              type: "BACKLOG",
+              type: 0, // BACKLOG = 0 (numeric enum value)
               columnId: columnId,
               projectId: projectId,
             },

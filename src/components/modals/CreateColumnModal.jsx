@@ -44,7 +44,7 @@ export default function CreateColumnModal({
           await createStatus(
             {
               name: name.trim(),
-              type: "BACKLOG",
+              type: 0, // BACKLOG = 0 (numeric enum value)
               columnId: columnId,
               projectId: projectId, // Include projectId here (was missing!)
             },
