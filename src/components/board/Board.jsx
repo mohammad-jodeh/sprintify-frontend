@@ -94,6 +94,40 @@ const Board = ({
       filtered = filtered.filter((issue) => !issue.assignee);
     }
 
+    // Apply sorting
+    const sortBy = filters.sortBy || 'priority';
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'priority': {
+          // Priority: HIGH > MEDIUM > LOW
+          const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+          const priorityA = priorityOrder[a.issuePriority] || 2;
+          const priorityB = priorityOrder[b.issuePriority] || 2;
+          return priorityB - priorityA; // Descending (HIGH first)
+        }
+        case 'created': {
+          // Created date: Newest first
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA;
+        }
+        case 'storyPoints': {
+          // Story points: Highest first
+          const pointsA = a.storyPoint || 0;
+          const pointsB = b.storyPoint || 0;
+          return pointsB - pointsA;
+        }
+        case 'assignee': {
+          // Assignee: A-Z (alphabetical)
+          const assigneeA = a.assignee || '';
+          const assigneeB = b.assignee || '';
+          return assigneeA.localeCompare(assigneeB);
+        }
+        default:
+          return 0;
+      }
+    });
+
     return filtered;
   }, [board.issues, filters, activeSprint, activeSprints]);
   const [isAnimated, setIsAnimated] = useState(false);
