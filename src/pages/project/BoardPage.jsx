@@ -140,10 +140,18 @@ const BoardPage = () => {
       {/* Team Capacity Toggle Button */}
       <div className="px-6 mb-4 flex justify-center">
         <button
-          onClick={() => setShowTeamCapacity(!showTeamCapacity)}
+          onClick={() => {
+            console.log("Team Capacity button clicked", !showTeamCapacity);
+            setShowTeamCapacity(!showTeamCapacity);
+          }}
           className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2"
+          style={{
+            backgroundColor: showTeamCapacity ? "#6366f1" : "#4f46e5",
+            cursor: "pointer",
+            padding: "8px 16px"
+          }}
         >
-          {showTeamCapacity ? "Hide Team Capacity" : "Show Team Capacity"}
+          {showTeamCapacity ? "📊 Hide Team Capacity" : "👥 Show Team Capacity"}
         </button>
       </div>
       
