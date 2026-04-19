@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Board from "../../components/board/Board";
 import TeamCapacity from "../../components/board/TeamCapacity";
 import LoadingScreen from "../../components/ui/LoadingScreen";
@@ -39,6 +39,20 @@ const BoardPage = () => {
   const [selectedEpic, setSelectedEpic] = useState(null);
   const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false);
   const [showTeamCapacity, setShowTeamCapacity] = useState(false);
+
+  // Debug boardData structure
+  useEffect(() => {
+    if (boardData) {
+      console.log("📊 BoardData structure:", {
+        hasProject: !!boardData.project,
+        projectKeys: boardData.project ? Object.keys(boardData.project) : [],
+        members: boardData.project?.members,
+        team: boardData.project?.team,
+        teamMembers: boardData.project?.teamMembers,
+        rawBoardData: boardData
+      });
+    }
+  }, [boardData]);
 
   // Epic management functions
   const handleCreateEpic = (newEpic) => {
@@ -162,6 +176,15 @@ const BoardPage = () => {
             issues={issues}
             projectMembers={boardData.project.members}
           />
+        </div>
+      )}
+      {showTeamCapacity && !boardData?.project?.members && (
+        <div className="px-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          ⚠️ No team members found. Debug info: {JSON.stringify({
+            hasProject: !!boardData?.project,
+            members: boardData?.project?.members,
+            projectKeys: boardData?.project ? Object.keys(boardData.project) : []
+          }, null, 2)}
         </div>
       )}
       
