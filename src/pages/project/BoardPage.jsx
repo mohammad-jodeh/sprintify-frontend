@@ -44,12 +44,10 @@ const BoardPage = () => {
   useEffect(() => {
     if (boardData) {
       console.log("📊 BoardData structure:", {
-        hasProject: !!boardData.project,
-        projectKeys: boardData.project ? Object.keys(boardData.project) : [],
-        members: boardData.project?.members,
-        team: boardData.project?.team,
-        teamMembers: boardData.project?.teamMembers,
-        rawBoardData: boardData
+        hasMembers: !!boardData.members,
+        memberCount: boardData.members?.length || 0,
+        members: boardData.members,
+        projectKeys: Object.keys(boardData).slice(0, 10)
       });
     }
   }, [boardData]);
@@ -170,21 +168,17 @@ const BoardPage = () => {
       </div>
       
       {/* Team Capacity View */}
-      {showTeamCapacity && boardData?.project?.members && (
+      {showTeamCapacity && boardData?.members && boardData.members.length > 0 && (
         <div className="px-6">
           <TeamCapacity 
             issues={issues}
-            projectMembers={boardData.project.members}
+            projectMembers={boardData.members}
           />
         </div>
       )}
-      {showTeamCapacity && !boardData?.project?.members && (
+      {showTeamCapacity && (!boardData?.members || boardData.members.length === 0) && (
         <div className="px-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          ⚠️ No team members found. Debug info: {JSON.stringify({
-            hasProject: !!boardData?.project,
-            members: boardData?.project?.members,
-            projectKeys: boardData?.project ? Object.keys(boardData.project) : []
-          }, null, 2)}
+          ⚠️ No team members found in project. Members: {boardData?.members?.length || 0}
         </div>
       )}
       
