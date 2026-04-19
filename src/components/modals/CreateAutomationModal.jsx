@@ -14,6 +14,10 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
 
   const [loading, setLoading] = useState(false);
 
+  // Ensure statuses and users are arrays
+  const safeStatuses = Array.isArray(statuses) ? statuses : [];
+  const safeUsers = Array.isArray(users) ? users : [];
+
   useEffect(() => {
     if (rule) {
       setFormData(rule);
@@ -163,7 +167,7 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
                     className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
                     <option value="">Any Status</option>
-                    {statuses.map((s) => (
+                    {safeStatuses.map((s) => (
                       <option key={s.id} value={s.name}>
                         {s.name}
                       </option>
@@ -181,7 +185,7 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
                     className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
                     <option value="">Select Status</option>
-                    {statuses.map((s) => (
+                    {safeStatuses.map((s) => (
                       <option key={s.id} value={s.name}>
                         {s.name}
                       </option>
@@ -249,7 +253,7 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
                   className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                   <option value="">Select Status</option>
-                  {statuses.map((s) => (
+                  {safeStatuses.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
                     </option>
@@ -271,7 +275,7 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
                   className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                   <option value="">Select User</option>
-                  {users.map((u) => (
+                  {safeUsers.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name || u.email}
                     </option>
