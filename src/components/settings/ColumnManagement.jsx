@@ -53,7 +53,7 @@ const ColumnManagement = ({ projectId }) => {
       });
 
       console.log("✅ Column response:", newColumn);
-      const columnId = newColumn?.id || newColumn?.data?.id;
+      const columnId = newColumn?.column?.id || newColumn?.id || newColumn?.data?.id;
       console.log("📍 Column ID extracted:", columnId);
 
       // Automatically create a status with the same name as the column
