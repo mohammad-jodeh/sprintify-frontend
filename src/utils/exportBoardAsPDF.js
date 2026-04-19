@@ -2,13 +2,44 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 /**
- * Export the board view as a PDF with improved layout and data
- * @param {string} projectName - Name of the project
- * @param {Array} columns - Board columns
- * @param {Array} issues - All issues (filtered/sorted)
- * @param {string} fileName - Optional custom file name
+ * Get user name from ID using members list
  */
-export const exportBoardAsPDF = async (projectName, columns, issues, fileName = null) => {
+const getUserName = (userId, members = []) => {
+  if (!userId) return 'Unassigned';
+  const member = members.find(m => m.id === userId);
+  return member?.name || userId;
+};
+
+/**
+ * Get priority color
+ */
+const getPriorityColor = (priority) => {
+  switch (priority?.toUpperCase()) {
+    case 'HIGH': return { r: 239, g: 68, b: 68 }; // Red
+    case 'MEDIUM': return { r: 245, g: 158, b: 11 }; // Amber
+    case 'LOW': return { r: 34, g: 197, b: 94 }; // Green
+    default: return { r: 107, g: 114, b: 128 }; // Gray
+  }
+};
+
+/**
+ * Get issue type badge
+ */
+const getIssueTypeBadge = (type) => {
+  const typeMap = {
+    TASK: '📋',
+    BUG: '🐛',
+    STORY: '📖',
+    EPIC: '🏛️',
+    SUBTASK: '└─'
+  };
+  return typeMap[type?.toUpperCase()] || '◆';
+};
+
+/**
+ * Export the board view as a PDF with professional layout
+ */
+export const exportBoardAsPDF = async (projectName, columns, issues, members = [], fileName = null) => {
   try {
     const pdf = new jsPDF({
       orientation: 'landscape',
@@ -18,205 +49,268 @@ export const exportBoardAsPDF = async (projectName, columns, issues, fileName = 
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    let yPosition = 15;
+    const margin = 12;
+    let yPosition = margin + 5;
 
-    // ===== PAGE 1: TITLE PAGE =====
-    pdf.setFontSize(24);
-    pdf.setTextColor(79, 70, 229); // Primary color
-    pdf.text(`${projectName}`, pageWidth / 2, 40, { align: 'center' });
+    // ===== PAGE 1: PROFESSIONAL TITLE PAGE =====
+    // Header background
+    pdf.setFillColor(79, 70, 229);
+    pdf.rect(0, 0, pageWidth, 50, 'F');
+
+    // Title
+    pdf.setFontSize(32);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text('BOARD EXPORT', pageWidth / 2, 25, { align: 'center' });
     
     pdf.setFontSize(14);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text('Board Export Report', pageWidth / 2, 55, { align: 'center' });
+    pdf.setTextColor(200, 199, 255);
+    pdf.text(projectName, pageWidth / 2, 38, { align: 'center' });
 
-    // Export details box
-    pdf.setDrawColor(200, 200, 200);
-    pdf.rect(20, 70, pageWidth - 40, 60);
-    
-    yPosition = 80;
+    // Stats box
+    yPosition = 70;
+    pdf.setFillColor(240, 245, 255);
+    pdf.rect(margin, yPosition, pageWidth - 2 * margin, 45, 'F');
+    pdf.setDrawColor(79, 70, 229);
+    pdf.setLineWidth(0.5);
+    pdf.rect(margin, yPosition, pageWidth - 2 * margin, 45);
+
     pdf.setFontSize(11);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(`Generated: ${new Date().toLocaleString()}`, 30, yPosition);
-    
-    yPosition += 10;
-    pdf.text(`Total Columns: ${columns.length}`, 30, yPosition);
-    
-    yPosition += 10;
-    pdf.text(`Total Issues: ${issues.length}`, 30, yPosition);
-
-    // Column summary
-    yPosition += 20;
-    pdf.setFontSize(12);
     pdf.setTextColor(79, 70, 229);
-    pdf.text('Columns:', 30, yPosition);
-    
-    yPosition += 8;
+    pdf.setFont(undefined, 'bold');
+    pdf.text('REPORT SUMMARY', margin + 5, yPosition + 8);
+
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
+    pdf.setFont(undefined, 'normal');
     
+    const statsData = [
+      { label: 'Generated', value: new Date().toLocaleString() },
+      { label: 'Total Columns', value: columns.length },
+      { label: 'Total Issues', value: issues.length },
+      { label: 'Team Members', value: members.length },
+    ];
+
+    let statY = yPosition + 15;
+    const colWidth = (pageWidth - 2 * margin - 10) / 2;
+    statsData.forEach((stat, idx) => {
+      const xOffset = margin + 5 + (idx % 2) * (colWidth + 5);
+      if (idx > 0 && idx % 2 === 0) statY += 8;
+      
+      pdf.setFont(undefined, 'bold');
+      pdf.text(`${stat.label}:`, xOffset, statY);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`${stat.value}`, xOffset + 35, statY);
+    });
+
+    // Column overview
+    yPosition += 55;
+    pdf.setFontSize(11);
+    pdf.setTextColor(79, 70, 229);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('COLUMN OVERVIEW', margin, yPosition);
+
+    yPosition += 8;
+    pdf.setFontSize(9);
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont(undefined, 'normal');
+
     columns.forEach((column, idx) => {
       const columnIssues = issues.filter(issue => issue.statusId && 
         column.statuses?.some(s => s.id === issue.statusId)
       );
-      pdf.text(`${idx + 1}. ${column.name} (${columnIssues.length} issues)`, 35, yPosition);
-      yPosition += 7;
+      const storyPoints = columnIssues.reduce((sum, issue) => sum + (issue.storyPoint || 0), 0);
+      
+      const colNum = `${idx + 1}.`;
+      const colName = column.name;
+      const stats = `${columnIssues.length} issues • ${storyPoints}pts`;
+      
+      pdf.text(colNum, margin, yPosition);
+      pdf.text(colName, margin + 8, yPosition);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(stats, margin + 60, yPosition);
+      pdf.setTextColor(0, 0, 0);
+      
+      yPosition += 6;
     });
 
     // ===== PAGE 2+: DETAILED BOARD VIEW =====
     pdf.addPage();
-    yPosition = 15;
+    yPosition = margin;
 
-    pdf.setFontSize(16);
+    pdf.setFontSize(14);
     pdf.setTextColor(79, 70, 229);
-    pdf.text('Board Details', 15, yPosition);
-    
-    yPosition += 12;
+    pdf.setFont(undefined, 'bold');
+    pdf.text('BOARD DETAILS', margin, yPosition);
+    yPosition += 8;
 
-    // Create a table-like layout with columns and their issues
-    const columnWidth = (pageWidth - 30) / Math.min(columns.length, 3); // Max 3 columns per page
-    let columnIndex = 0;
-    let startX = 15;
-    let startY = yPosition;
-
-    columns.forEach((column, colIdx) => {
-      if (columnIndex > 0 && columnIndex % 3 === 0) {
-        // New row of columns
-        pdf.addPage();
-        startX = 15;
-        startY = 15;
-        yPosition = startY;
-      }
-
-      const xPos = startX + (columnIndex % 3) * columnWidth;
+    // Process columns with better layout
+    columns.forEach((colIdx, colPosition) => {
+      const column = columns[colIdx];
       const columnIssues = issues.filter(issue => issue.statusId && 
         column.statuses?.some(s => s.id === issue.statusId)
       );
 
-      // Column header
-      pdf.setDrawColor(79, 70, 229);
-      pdf.setFillColor(240, 240, 255);
-      pdf.rect(xPos, yPosition, columnWidth - 5, 10, 'F');
+      // Check if we need a new page
+      if (yPosition > pageHeight - 60) {
+        pdf.addPage();
+        yPosition = margin;
+      }
+
+      // Column header with background
+      const headerHeight = 10;
+      pdf.setFillColor(79, 70, 229);
+      pdf.rect(margin, yPosition, pageWidth - 2 * margin, headerHeight, 'F');
       
-      pdf.setFontSize(11);
-      pdf.setTextColor(79, 70, 229);
-      pdf.text(column.name, xPos + 3, yPosition + 7);
-      
-      yPosition += 12;
-      
-      // Column stats
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(12);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont(undefined, 'bold');
+      pdf.text(column.name, margin + 4, yPosition + 6.5);
+
       const storyPoints = columnIssues.reduce((sum, issue) => sum + (issue.storyPoint || 0), 0);
-      pdf.text(`Issues: ${columnIssues.length} | Story Points: ${storyPoints}`, xPos + 3, yPosition);
-      
-      yPosition += 8;
+      pdf.setFontSize(9);
+      pdf.text(`${columnIssues.length} issues • ${storyPoints}pts`, pageWidth - margin - 40, yPosition + 6.5);
+
+      yPosition += headerHeight + 3;
 
       // Issues in this column
-      pdf.setFontSize(9);
       pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(9);
       
-      const maxIssuesPerPage = 15;
-      columnIssues.slice(0, maxIssuesPerPage).forEach((issue, idx) => {
-        const issueType = issue.issueType || 'TASK';
-        const priority = issue.issuePriority || 'MEDIUM';
+      columnIssues.slice(0, 20).forEach((issue, issueIdx) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+
+        // Issue background
+        if (issueIdx % 2 === 0) {
+          pdf.setFillColor(245, 245, 250);
+          pdf.rect(margin + 1, yPosition - 2, pageWidth - 2 * margin - 2, 10, 'F');
+        }
+
+        // Issue type and priority indicator
+        const typeIcon = getIssueTypeBadge(issue.issueType);
+        const priorityColor = getPriorityColor(issue.issuePriority);
         
-        // Issue number and title
-        const issuePrefix = `[${issueType.substring(0, 1)}]`;
-        const issueText = `${issuePrefix} #${idx + 1}: ${issue.title?.substring(0, 35)}...`;
+        // Priority bar
+        pdf.setFillColor(priorityColor.r, priorityColor.g, priorityColor.b);
+        pdf.rect(margin + 2, yPosition - 1.5, 2, 8, 'F');
+
+        // Issue content
+        pdf.setFont(undefined, 'bold');
+        const title = `${typeIcon} ${issue.title}`.substring(0, 60);
+        pdf.text(title, margin + 6, yPosition + 2);
+
+        // Details row
+        pdf.setFont(undefined, 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+
+        const assigneeName = getUserName(issue.assignee, members);
+        const priority = issue.issuePriority ? `${issue.issuePriority}` : 'Normal';
+        const points = issue.storyPoint ? `${issue.storyPoint}pts` : '';
+
+        let detailText = `👤 ${assigneeName}`;
+        if (points) detailText += ` | 📊 ${points}`;
+        detailText += ` | 🎯 ${priority}`;
+
+        pdf.text(detailText, margin + 6, yPosition + 6);
         
         pdf.setTextColor(0, 0, 0);
-        pdf.text(issueText, xPos + 5, yPosition);
-        
-        // Issue details
-        yPosition += 5;
-        pdf.setFontSize(8);
-        pdf.setTextColor(120, 120, 120);
-        
-        let detailsText = '';
-        if (issue.assignee) detailsText += `👤 ${issue.assignee} `;
-        if (issue.storyPoint) detailsText += `📊 ${issue.storyPoint}pts `;
-        if (priority) detailsText += `🎯 ${priority}`;
-        
-        pdf.text(detailsText, xPos + 7, yPosition);
-        
-        yPosition += 6;
         pdf.setFontSize(9);
-
-        // Check if we need a new page
-        if (yPosition > pageHeight - 20 && idx < columnIssues.length - 1) {
-          pdf.addPage();
-          yPosition = 15;
-          startY = yPosition;
-        }
+        yPosition += 11;
       });
 
-      if (columnIssues.length > maxIssuesPerPage) {
-        pdf.setFontSize(8);
+      if (columnIssues.length > 20) {
         pdf.setTextColor(150, 150, 150);
-        yPosition += 3;
-        pdf.text(`+${columnIssues.length - maxIssuesPerPage} more issues`, xPos + 5, yPosition);
+        pdf.setFontSize(8);
+        pdf.text(`... and ${columnIssues.length - 20} more issues`, margin + 6, yPosition);
         yPosition += 5;
       }
 
-      if ((colIdx + 1) % 3 === 0) {
-        // Reset Y for next row
-        yPosition = startY;
-        columnIndex = 0;
-      } else {
-        yPosition = startY;
-        columnIndex++;
-      }
+      yPosition += 5;
     });
 
     // ===== PAGE 3+: DETAILED ISSUE LIST =====
     pdf.addPage();
-    yPosition = 15;
+    yPosition = margin;
 
-    pdf.setFontSize(16);
+    pdf.setFontSize(14);
     pdf.setTextColor(79, 70, 229);
-    pdf.text('All Issues', 15, yPosition);
+    pdf.setFont(undefined, 'bold');
+    pdf.text('COMPLETE ISSUE LIST', margin, yPosition);
     
-    yPosition += 12;
+    yPosition += 10;
 
-    // Create detailed issue list
+    // Create table headers
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, 'bold');
+    pdf.setFillColor(240, 245, 255);
+    pdf.rect(margin, yPosition - 4, pageWidth - 2 * margin, 8, 'F');
+    
+    pdf.setTextColor(79, 70, 229);
+    pdf.text('#', margin + 2, yPosition + 1);
+    pdf.text('Title', margin + 8, yPosition + 1);
+    pdf.text('Type', margin + 85, yPosition + 1);
+    pdf.text('Priority', margin + 110, yPosition + 1);
+    pdf.text('Assignee', margin + 140, yPosition + 1);
+    pdf.text('Points', margin + 200, yPosition + 1);
+
+    yPosition += 10;
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont(undefined, 'normal');
+
+    // Issue rows
     issues.forEach((issue, idx) => {
-      if (yPosition > pageHeight - 30) {
+      if (yPosition > pageHeight - 15) {
         pdf.addPage();
-        yPosition = 15;
+        yPosition = margin;
       }
 
-      // Issue number and title
-      pdf.setFontSize(11);
-      pdf.setTextColor(79, 70, 229);
-      pdf.text(`${idx + 1}. ${issue.title}`, 15, yPosition);
-      
-      yPosition += 7;
+      // Alternate row background
+      if (idx % 2 === 0) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPosition - 3, pageWidth - 2 * margin, 7, 'F');
+      }
 
-      // Issue details
-      pdf.setFontSize(9);
+      pdf.setFontSize(8.5);
+      
+      // Issue number
+      pdf.text(`${idx + 1}`, margin + 2, yPosition + 1);
+      
+      // Title (truncated)
+      const title = issue.title?.substring(0, 50) || '-';
+      pdf.text(title, margin + 8, yPosition + 1);
+      
+      // Type
+      const type = issue.issueType || '-';
+      pdf.text(type, margin + 85, yPosition + 1);
+      
+      // Priority with color
+      const priority = issue.issuePriority || '-';
+      const color = getPriorityColor(issue.issuePriority);
+      pdf.setTextColor(color.r, color.g, color.b);
+      pdf.setFont(undefined, 'bold');
+      pdf.text(priority, margin + 110, yPosition + 1);
+      
       pdf.setTextColor(0, 0, 0);
-
-      const details = [
-        issue.id ? `ID: ${issue.id.substring(0, 8)}...` : '',
-        issue.issueType ? `Type: ${issue.issueType}` : '',
-        issue.issuePriority ? `Priority: ${issue.issuePriority}` : '',
-        issue.storyPoint ? `Story Points: ${issue.storyPoint}` : '',
-        issue.assignee ? `Assigned to: ${issue.assignee}` : 'Not assigned',
-        issue.description ? `Description: ${issue.description.substring(0, 80)}...` : '',
-      ].filter(d => d);
-
-      details.forEach(detail => {
-        pdf.text(detail, 20, yPosition);
-        yPosition += 5;
-      });
-
-      yPosition += 3;
+      pdf.setFont(undefined, 'normal');
       
-      // Separator line
-      pdf.setDrawColor(220, 220, 220);
-      pdf.line(15, yPosition, pageWidth - 15, yPosition);
-      yPosition += 5;
+      // Assignee name
+      const assignee = getUserName(issue.assignee, members);
+      pdf.text(assignee, margin + 140, yPosition + 1);
+      
+      // Story points
+      const points = issue.storyPoint ? `${issue.storyPoint}` : '-';
+      pdf.text(points, margin + 200, yPosition + 1);
+
+      yPosition += 8;
     });
+
+    // Footer on last page
+    pdf.setFontSize(8);
+    pdf.setTextColor(150, 150, 150);
+    pdf.text(`Generated by Sprintify - ${new Date().toLocaleDateString()}`, margin, pageHeight - 5);
 
     // Generate file name
     const timestamp = new Date().toISOString().slice(0, 10);

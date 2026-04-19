@@ -278,11 +278,12 @@ const Board = ({
   const handleExportBoardAsPDF = useCallback(async () => {
     try {
       const projectName = board.project?.name || "Board";
-      await exportBoardAsPDF(projectName, board.columns, filteredIssues);
+      const members = boardData?.members || [];
+      await exportBoardAsPDF(projectName, board.columns, filteredIssues, members);
     } catch (error) {
       console.error("Failed to export board as PDF:", error);
     }
-  }, [board.project?.name, board.columns, filteredIssues]);
+  }, [board.project?.name, board.columns, filteredIssues, boardData?.members]);
 
   // Check if we have required data to render the board
   const hasRequiredData = board?.columns && board.columns.length > 0 && board.issues;
