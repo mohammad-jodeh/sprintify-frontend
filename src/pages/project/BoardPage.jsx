@@ -1,5 +1,7 @@
 import { useParams, useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import Board from "../../components/board/Board";
+import TeamCapacity from "../../components/board/TeamCapacity";
 import LoadingScreen from "../../components/ui/LoadingScreen";
 import { BoardSkeleton } from "../../components/ui/SkeletonLoader";
 import CreateEpicModal from "../../components/modals/CreateEpicModal";
@@ -11,7 +13,6 @@ import { useBoardData } from "../../hooks/useBoardData";
 import { useProjectRole } from "../../hooks/useProjectRole";
 import { updateTask } from "../../api/tasks";
 import toast from "react-hot-toast";
-import { useState } from "react";
 
 const BoardPage = () => {
   const { projectId } = useParams();
@@ -37,6 +38,7 @@ const BoardPage = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [selectedEpic, setSelectedEpic] = useState(null);
   const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false);
+  const [showTeamCapacity, setShowTeamCapacity] = useState(false);
 
   // Epic management functions
   const handleCreateEpic = (newEpic) => {
@@ -134,6 +136,27 @@ const BoardPage = () => {
         epics={epics}
         onIssueClick={handleIssueClick}
       />
+      
+      {/* Team Capacity Toggle Button */}
+      <div className="px-6 mb-4 flex justify-center">
+        <button
+          onClick={() => setShowTeamCapacity(!showTeamCapacity)}
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2"
+        >
+          {showTeamCapacity ? "Hide Team Capacity" : "Show Team Capacity"}
+        </button>
+      </div>
+      
+      {/* Team Capacity View */}
+      {showTeamCapacity && boardData?.project?.members && (
+        <div className="px-6">
+          <TeamCapacity 
+            issues={issues}
+            projectMembers={boardData.project.members}
+          />
+        </div>
+      )}
+      
       {/* Modal Renders */}
       {searchParams.get("modal") === "create-epic" && (
         <CreateEpicModal
