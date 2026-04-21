@@ -53,16 +53,34 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
   const handleSaveRule = async (formData) => {
     try {
       if (selectedRule) {
+        console.log("[AutomationRulesList] ✏️ Updating rule:", {
+          ruleId: selectedRule.id,
+          projectId: projectId,
+          formData: formData
+        });
         await automationAPI.updateRule(projectId, selectedRule.id, formData);
+        console.log("[AutomationRulesList] ✅ Rule updated successfully");
         toast.success("Rule updated successfully");
       } else {
+        console.log("[AutomationRulesList] ➕ Creating new rule:", {
+          projectId: projectId,
+          ruleName: formData.name,
+          formData: formData
+        });
         await automationAPI.createRule(projectId, formData);
+        console.log("[AutomationRulesList] ✅ Rule created successfully, now reloading rules list");
         toast.success("Rule created successfully");
       }
+      console.log("[AutomationRulesList] 🔄 Reloading rules after save...");
       await loadRules();
       setIsModalOpen(false);
     } catch (error) {
-      console.error("[AutomationRulesList] Failed to save rule:", error);
+      console.error("[AutomationRulesList] ❌ Failed to save rule:", {
+        selectedRule: selectedRule,
+        formData: formData,
+        error: error.message,
+        fullError: error
+      });
       toast.error("Failed to save rule");
       throw error;
     }
@@ -70,10 +88,16 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
 
   const handleToggleRule = async (ruleId) => {
     try {
+      console.log("[AutomationRulesList] 🔄 Toggling rule status:", {
+        ruleId: ruleId,
+        projectId: projectId
+      });
       await automationAPI.toggleRuleStatus(projectId, ruleId);
+      console.log("[AutomationRulesList] ✅ Rule status toggled, reloading rules...");
       await loadRules();
       toast.success("Rule status updated");
     } catch (error) {
+      console.error("[AutomationRulesList] ❌ Failed to toggle rule:", error);
       toast.error("Failed to toggle rule");
     }
   };
@@ -81,10 +105,16 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
   const handleDeleteRule = async (ruleId) => {
     if (window.confirm("Are you sure you want to delete this automation rule?")) {
       try {
+        console.log("[AutomationRulesList] 🗑️ Deleting rule:", {
+          ruleId: ruleId,
+          projectId: projectId
+        });
         await automationAPI.deleteRule(projectId, ruleId);
+        console.log("[AutomationRulesList] ✅ Rule deleted successfully, reloading rules...");
         await loadRules();
         toast.success("Rule deleted successfully");
       } catch (error) {
+        console.error("[AutomationRulesList] ❌ Failed to delete rule:", error);
         toast.error("Failed to delete rule");
       }
     }

@@ -62,17 +62,34 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
     e.preventDefault();
 
     if (!formData.name.trim()) {
+      console.warn("[CreateAutomationModal] ⚠️ Rule name is empty");
       toast.error("Rule name is required");
       return;
     }
 
     try {
       setLoading(true);
+      console.log("[CreateAutomationModal] 📝 Submitting form:", {
+        operation: rule ? "UPDATE" : "CREATE",
+        ruleName: formData.name,
+        triggerType: formData.triggerType,
+        actionType: formData.actionType,
+        projectId: projectId,
+        fullFormData: formData
+      });
+      
       await onSave(formData);
+      
+      console.log("[CreateAutomationModal] ✅ Form saved successfully");
       resetForm();
       onClose();
       toast.success(rule ? "Rule updated successfully!" : "Rule created successfully!");
     } catch (error) {
+      console.error("[CreateAutomationModal] ❌ Error saving rule:", {
+        error: error.message,
+        details: error,
+        formData: formData
+      });
       toast.error("Error saving rule");
     } finally {
       setLoading(false);

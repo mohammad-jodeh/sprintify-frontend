@@ -21,39 +21,58 @@ const AutomationPage = () => {
   const loadPageData = async () => {
     try {
       setLoading(true);
+      console.log("[AutomationPage] 🔄 Loading page data for project:", projectId);
 
       // Load statuses
       try {
+        console.log("[AutomationPage] 📋 Fetching statuses...");
         const statusesData = await statusAPI.fetchStatuses({ projectId });
-        setStatuses(Array.isArray(statusesData) ? statusesData : []);
+        const statusesArray = Array.isArray(statusesData) ? statusesData : [];
+        console.log("[AutomationPage] ✅ Statuses loaded:", {
+          count: statusesArray.length,
+          statuses: statusesArray
+        });
+        setStatuses(statusesArray);
       } catch (error) {
-        console.error("Failed to load statuses:", error);
+        console.error("[AutomationPage] ❌ Failed to load statuses:", error);
         setStatuses([]);
       }
 
       // Load project members
       try {
+        console.log("[AutomationPage] 👥 Fetching project members...");
         const projectData = await projectAPI.fetchProjectById(projectId);
+        console.log("[AutomationPage] 📊 Project data received:", projectData);
+        
         if (projectData?.members && Array.isArray(projectData.members)) {
+          console.log("[AutomationPage] ✅ Members loaded:", {
+            count: projectData.members.length,
+            members: projectData.members
+          });
           setUsers(projectData.members);
         } else {
+          console.warn("[AutomationPage] ⚠️ No members found in project data");
           setUsers([]);
         }
       } catch (error) {
-        console.error("Failed to load project members:", error);
+        console.error("[AutomationPage] ❌ Failed to load project members:", error);
         setUsers([]);
       }
 
       // Load automation stats
       try {
+        console.log("[AutomationPage] 📊 Fetching automation stats...");
         const statsData = await automationAPI.getStats(projectId);
+        console.log("[AutomationPage] ✅ Stats loaded:", statsData);
         setStats(statsData);
       } catch (error) {
-        console.error("Failed to load automation stats:", error);
+        console.error("[AutomationPage] ❌ Failed to load automation stats:", error);
       }
+
+      console.log("[AutomationPage] ✅ All page data loaded successfully");
     } catch (error) {
+      console.error("[AutomationPage] ❌ Fatal error loading page data:", error);
       toast.error("Failed to load page data");
-      console.error(error);
     } finally {
       setLoading(false);
     }
