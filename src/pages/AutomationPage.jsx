@@ -45,11 +45,29 @@ const AutomationPage = () => {
         console.log("[AutomationPage] 📊 Project data received:", projectData);
         
         if (projectData?.members && Array.isArray(projectData.members)) {
+          const normalizedUsers = projectData.members
+            .map((member) => {
+              const resolvedId = member?.userId || member?.user?.id;
+              const resolvedName = member?.user?.fullName || member?.user?.name || member?.user?.email;
+              const resolvedEmail = member?.user?.email;
+
+              if (!resolvedId) {
+                return null;
+              }
+
+              return {
+                id: resolvedId,
+                name: resolvedName || resolvedEmail || resolvedId,
+                email: resolvedEmail,
+              };
+            })
+            .filter(Boolean);
+
           console.log("[AutomationPage] ✅ Members loaded:", {
-            count: projectData.members.length,
-            members: projectData.members
+            count: normalizedUsers.length,
+            members: normalizedUsers
           });
-          setUsers(projectData.members);
+          setUsers(normalizedUsers);
         } else {
           console.warn("[AutomationPage] ⚠️ No members found in project data");
           setUsers([]);
