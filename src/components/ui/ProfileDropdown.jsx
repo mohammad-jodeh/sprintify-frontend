@@ -1,27 +1,13 @@
 import { useState, useEffect } from "react";
 import { User2Icon, LogOut, MessageCircle, Settings } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import DropdownItem from "./DropdownItem";
 import ThemeToggle from "../ThemeToggle";
-import ConfirmModalLogout from "../modals/ConfirmModalLogout";
 import useAuthStore from "../../store/authstore";
 
-const ProfileDropdown = ({ isOpen, dropdownRef }) => {
-  const navigate = useNavigate();
+const ProfileDropdown = ({ isOpen, dropdownRef, onLogoutClick }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { user, clearAuth } = useAuthStore();
-
-  // Reset logout modal when dropdown closes
-  useEffect(() => {
-    if (!isOpen && showLogoutConfirm) setShowLogoutConfirm(false);
-  }, [isOpen, showLogoutConfirm]);
-
-  const handleLogout = () => {
-    clearAuth(); // Use auth store's clearAuth method
-    localStorage.clear(); // Clear all persisted data
-    sessionStorage.clear(); // Clear session data
-    navigate("/login", { replace: true }); // Replace (not push) to prevent back-button access
-  };
+  const { user } = useAuthStore();
 
   if (!isOpen) return null;
 
@@ -81,19 +67,13 @@ const ProfileDropdown = ({ isOpen, dropdownRef }) => {
       {/* Logout */}
       <div className="border-t border-gray-100 dark:border-gray-700">
         <button
-          onClick={() => setShowLogoutConfirm(true)}
+          onClick={onLogoutClick}
           className="w-full text-left px-4 py-2 flex items-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 text-sm"
         >
           <LogOut size={16} />
           Log Out
         </button>
       </div>
-      {/* Confirm modal for logout */}
-      <ConfirmModalLogout
-        open={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={handleLogout}
-      />
     </div>
   );
 };

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SearchBar from "../ui/SearchBar";
 import ProfileDropdown from "../ui/ProfileDropdown";
+import ConfirmModalLogout from "../modals/ConfirmModalLogout";
+import useAuthStore from "../../store/authstore";
 import { Plus, User2Icon } from "lucide-react";
 
 const Logo = () => (
@@ -31,21 +33,35 @@ const NewProjectButton = () => {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dropdownRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { clearAuth } = useAuthStore();
 
   // Show search bar only on the dashboard/projects page
   const isProjectPage = location.pathname === "/dashboard/projects";
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Don't close dropdown if logout modal is open or if clicking inside modal
+      if (showLogoutConfirm) return;
+      
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [showLogoutConfirm]);
+
+  const handleLogout = () => {
+    clearAuth();
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <header className="relative z-[9999] bg-white dark:bg-gradient-header shadow-sm border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 py-3">
       <Logo />
@@ -61,8 +77,17 @@ export default function Navbar() {
         >
           <User2Icon size={20} />
         </button>
-        <ProfileDropdown isOpen={open} dropdownRef={dropdownRef} />
+        <ProfileDropdown 
+          isOpen={open} 
+          dropdownRef={dropdownRef}
+          onLogoutClick={() => setShowLogoutConfirm(true)}
+        />
       </div>
+      <ConfirmModalLogout
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+      />
     </header>
   );
 }
