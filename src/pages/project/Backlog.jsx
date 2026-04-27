@@ -123,13 +123,24 @@ export default function Backlog() {
   }, [projectId]);
 
   // Refresh data when window gains focus (user switches back to tab)
+  // BUT debounce to prevent excessive API calls if user switches tabs rapidly
   useEffect(() => {
+    let debounceTimer;
     const handleFocus = () => {
-      refreshData();
+      // Clear any pending refresh
+      clearTimeout(debounceTimer);
+      // Wait 500ms before refreshing to debounce rapid focus events
+      debounceTimer = setTimeout(() => {
+        console.log("🔄 Window focus detected, refreshing backlog data");
+        refreshData();
+      }, 500);
     };
 
     window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      clearTimeout(debounceTimer);
+    };
   }, [projectId]);
   // Group issues by sprint or backlog
   const groupedIssues = useMemo(() => {

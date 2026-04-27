@@ -74,6 +74,21 @@ protectedApi.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 429 Too Many Requests - implement exponential backoff retry
+    if (error.response?.status === 429 && (!originalRequest._retryCount || originalRequest._retryCount < 3)) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      
+      // Calculate exponential backoff: 1s, 2s, 4s
+      const delay = Math.pow(2, originalRequest._retryCount - 1) * 1000;
+      console.warn(`⏳ Rate limited (429). Retry ${originalRequest._retryCount}/3 after ${delay}ms...`);
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Retry the request
+      return protectedApi(originalRequest);
+    }
+
     // Handle 401 Unauthorized - retry once with fresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
