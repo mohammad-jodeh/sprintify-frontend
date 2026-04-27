@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Board from "../../components/board/Board";
 import LoadingScreen from "../../components/ui/LoadingScreen";
 import { BoardSkeleton } from "../../components/ui/SkeletonLoader";
@@ -11,6 +11,7 @@ import IssueDetailsModal from "../../components/modals/IssueDetailsModal";
 import { useBoardData } from "../../hooks/useBoardData";
 import { useProjectRole } from "../../hooks/useProjectRole";
 import toast from "react-hot-toast";
+import socketService from "../../services/socket";
 
 const BoardPage = () => {
   const { projectId } = useParams();
@@ -36,6 +37,80 @@ const BoardPage = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [selectedEpic, setSelectedEpic] = useState(null);
   const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false);
+
+  // Set up real-time socket event listeners for board updates
+  useEffect(() => {
+    if (!projectId) return;
+
+    // Handler for issue created
+    const handleIssueCreated = (data) => {
+      console.log('Board: New issue created', data);
+      setIssues((prev) => [...prev, data.issue]);
+      toast.success("New issue created on board!");
+    };
+
+    // Handler for issue updated
+    const handleIssueUpdated = (data) => {
+      console.log('Board: Issue updated', data);
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue.id === data.issue.id ? data.issue : issue
+        )
+      );
+    };
+
+    // Handler for issue deleted
+    const handleIssueDeleted = (data) => {
+      console.log('Board: Issue deleted', data);
+      setIssues((prev) =>
+        prev.filter((issue) => issue.id !== data.issueId)
+      );
+      if (selectedIssue?.id === data.issueId) {
+        setIsIssueDetailsOpen(false);
+        setSelectedIssue(null);
+      }
+    };
+
+    // Handler for issue status changed
+    const handleIssueStatusChanged = (data) => {
+      console.log('Board: Issue status changed', data);
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue.id === data.issue.id ? data.issue : issue
+        )
+      );
+    };
+
+    // Handler for issue assigned
+    const handleIssueAssigned = (data) => {
+      console.log('Board: Issue assigned', data);
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue.id === data.issue.id ? data.issue : issue
+        )
+      );
+    };
+
+    // Set up socket event callbacks
+    socketService.setOnIssueCreated(handleIssueCreated);
+    socketService.setOnIssueUpdated(handleIssueUpdated);
+    socketService.setOnIssueDeleted(handleIssueDeleted);
+    socketService.setOnIssueStatusChanged(handleIssueStatusChanged);
+    socketService.setOnIssueAssigned(handleIssueAssigned);
+
+    // Join the project room for real-time updates
+    socketService.joinProject(projectId);
+
+    // Cleanup on unmount
+    return () => {
+      socketService.leaveProject(projectId);
+      socketService.setOnIssueCreated(null);
+      socketService.setOnIssueUpdated(null);
+      socketService.setOnIssueDeleted(null);
+      socketService.setOnIssueStatusChanged(null);
+      socketService.setOnIssueAssigned(null);
+    };
+  }, [projectId, setIssues, selectedIssue]);
 
   // Epic management functions
   const handleCreateEpic = (newEpic) => {
