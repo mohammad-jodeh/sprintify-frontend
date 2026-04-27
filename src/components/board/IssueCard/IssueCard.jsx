@@ -22,7 +22,7 @@ const IssueCard = ({ issue, epics = [], onIssueClick }) => {
   const cardClasses = useMemo(() => {
     const baseClass = `bg-white dark:bg-gradient-card rounded-xl p-3 border ${getIssueColor(issue)} border-l-4 shadow-sm cursor-grab active:cursor-grabbing`;
     const dragClass = isDragging
-      ? "opacity-50 ring-2 ring-primary shadow-lg z-50"
+      ? "ring-2 ring-primary shadow-lg z-50"
       : "hover:shadow-md dark:hover:shadow-gray-900/30 hover:shadow-lg";
     return `${baseClass} ${dragClass} transition-all duration-150 will-change-transform mb-3`;
   }, [isDragging, issue]);
