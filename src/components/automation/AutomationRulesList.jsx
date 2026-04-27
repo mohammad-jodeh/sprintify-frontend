@@ -144,6 +144,29 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
     return labels[actionType] || actionType;
   };
 
+  const getActionPayloadDisplay = (actionType, actionPayload) => {
+    if (!actionPayload || Object.keys(actionPayload).length === 0) {
+      return "";
+    }
+
+    const [key, value] = Object.entries(actionPayload)[0];
+    
+    if (actionType === "assign_user" && key === "userId") {
+      // Look up user name from users array
+      const user = users.find((u) => u.id === value);
+      return `assignee: ${user?.name || user?.email || value}`;
+    }
+    
+    if (actionType === "auto_transition" && key === "targetStatusId") {
+      // Look up status name from statuses array
+      const status = statuses.find((s) => s.id === value);
+      return `status: ${status?.name || value}`;
+    }
+    
+    // Default: show key-value pair, truncated
+    return `${key}: ${String(value).slice(0, 30)}${String(value).length > 30 ? "..." : ""}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -257,10 +280,7 @@ const AutomationRulesList = ({ projectId, statuses = [], users = [] }) => {
                       </p>
                       {rule.actionPayload && Object.keys(rule.actionPayload).length > 0 && (
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          {Object.entries(rule.actionPayload)
-                            .slice(0, 1)
-                            .map(([key, value]) => `${key}: ${String(value).slice(0, 30)}...`)
-                            .join(", ")}
+                          {getActionPayloadDisplay(rule.actionType, rule.actionPayload)}
                         </p>
                       )}
                     </div>
