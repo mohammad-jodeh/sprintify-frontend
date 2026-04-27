@@ -75,10 +75,11 @@ const StatusSection = ({
     };
   }, []);
 
-  const handleEnhancedDragOver = (e) => {
+  const handleEnhancedDragOver = useCallback((e) => {
     if (!isDragging) return;
 
     e.preventDefault(); // Allow drop
+    e.stopPropagation();
     setIsDraggedOver(true);
 
     // Clear any pending timeout
@@ -88,9 +89,9 @@ const StatusSection = ({
     }
 
     handleDragOver(e);
-  };
+  }, [isDragging, handleDragOver]);
 
-  const handleEnhancedDragLeave = (e) => {
+  const handleEnhancedDragLeave = useCallback((e) => {
     // Use timeout to prevent flickering when moving between child elements
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current);
@@ -98,10 +99,10 @@ const StatusSection = ({
 
     dragTimeoutRef.current = setTimeout(() => {
       setIsDraggedOver(false);
-    }, 50);
+    }, 30); // Reduced from 50ms for snappier feel
 
     handleDragLeave(e);
-  };
+  }, [handleDragLeave]);
 
   const handleEnhancedDrop = (e) => {
     setIsDraggedOver(false);
