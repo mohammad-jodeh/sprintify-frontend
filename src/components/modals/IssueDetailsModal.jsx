@@ -5,6 +5,7 @@ import EditIssueModal from "./EditIssueModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import { X, FileText, Trash2, Edit3, User2 } from "lucide-react";
 import { fetchEpics } from "../../api/epics";
+import { deleteIssue } from "../../api/issues";
 import toast from "react-hot-toast";
 import { useProjectRole } from "../../hooks/useProjectRole";
 import { can, PERMISSIONS } from "../../utils/permission";
@@ -54,7 +55,7 @@ export default function IssueDetailsModal({
       }
 
       // For real issues, make API call
-      await api.delete(`/issues/${issue.id}`);
+      await deleteIssue(projectId, issue.id);
       toast.success("Issue deleted successfully!");
       onDelete && onDelete(issue.id);
       onClose();

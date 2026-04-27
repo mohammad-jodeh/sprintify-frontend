@@ -85,6 +85,7 @@ const AutomationPage = () => {
         setStats(statsData);
       } catch (error) {
         console.error("[AutomationPage] ❌ Failed to load automation stats:", error);
+        setStats(null);
       }
 
       console.log("[AutomationPage] ✅ All page data loaded successfully");
