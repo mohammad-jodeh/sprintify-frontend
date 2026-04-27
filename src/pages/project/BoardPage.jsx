@@ -44,14 +44,14 @@ const BoardPage = () => {
 
     // Handler for issue created
     const handleIssueCreated = (data) => {
-      console.log('Board: New issue created', data);
+      console.log('🎯 Board: New issue created', data);
       setIssues((prev) => [...prev, data.issue]);
       toast.success("New issue created on board!");
     };
 
     // Handler for issue updated
     const handleIssueUpdated = (data) => {
-      console.log('Board: Issue updated', data);
+      console.log('🎯 Board: Issue updated', data);
       setIssues((prev) =>
         prev.map((issue) =>
           issue.id === data.issue.id ? data.issue : issue
@@ -61,7 +61,7 @@ const BoardPage = () => {
 
     // Handler for issue deleted
     const handleIssueDeleted = (data) => {
-      console.log('Board: Issue deleted', data);
+      console.log('🎯 Board: Issue deleted', data);
       setIssues((prev) =>
         prev.filter((issue) => issue.id !== data.issueId)
       );
@@ -73,7 +73,7 @@ const BoardPage = () => {
 
     // Handler for issue status changed
     const handleIssueStatusChanged = (data) => {
-      console.log('Board: Issue status changed', data);
+      console.log('🎯 Board: Issue status changed', data);
       setIssues((prev) =>
         prev.map((issue) =>
           issue.id === data.issue.id ? data.issue : issue
@@ -83,7 +83,7 @@ const BoardPage = () => {
 
     // Handler for issue assigned
     const handleIssueAssigned = (data) => {
-      console.log('Board: Issue assigned', data);
+      console.log('🎯 Board: Issue assigned', data);
       setIssues((prev) =>
         prev.map((issue) =>
           issue.id === data.issue.id ? data.issue : issue
@@ -92,17 +92,35 @@ const BoardPage = () => {
     };
 
     // Set up socket event callbacks
+    console.log('📡 BoardPage: Setting up socket event listeners for project:', projectId);
     socketService.setOnIssueCreated(handleIssueCreated);
     socketService.setOnIssueUpdated(handleIssueUpdated);
     socketService.setOnIssueDeleted(handleIssueDeleted);
     socketService.setOnIssueStatusChanged(handleIssueStatusChanged);
     socketService.setOnIssueAssigned(handleIssueAssigned);
 
-    // Join the project room for real-time updates
-    socketService.joinProject(projectId);
+    // Ensure socket is connected before joining project room
+    if (socketService.isSocketConnected()) {
+      console.log('📡 BoardPage: Socket is connected, joining project room:', projectId);
+      socketService.joinProject(projectId);
+    } else {
+      console.warn('📡 BoardPage: Socket not connected yet, waiting for connection...');
+      // Try to join after a short delay to ensure connection
+      const timer = setTimeout(() => {
+        if (socketService.isSocketConnected()) {
+          console.log('📡 BoardPage: Socket now connected, joining project room:', projectId);
+          socketService.joinProject(projectId);
+        } else {
+          console.warn('📡 BoardPage: Socket still not connected');
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
 
     // Cleanup on unmount
     return () => {
+      console.log('📡 BoardPage: Cleaning up socket listeners for project:', projectId);
       socketService.leaveProject(projectId);
       socketService.setOnIssueCreated(null);
       socketService.setOnIssueUpdated(null);
@@ -111,6 +129,21 @@ const BoardPage = () => {
       socketService.setOnIssueAssigned(null);
     };
   }, [projectId, setIssues, selectedIssue]);
+
+  // Monitor socket connection state and rejoin project room if socket reconnects
+  useEffect(() => {
+    if (!projectId) return;
+    
+    // Check connection status periodically
+    const connectionCheckInterval = setInterval(() => {
+      if (socketService.isSocketConnected()) {
+        console.log('📡 BoardPage: Socket reconnected, ensuring project room is joined:', projectId);
+        socketService.joinProject(projectId);
+      }
+    }, 3000); // Check every 3 seconds
+    
+    return () => clearInterval(connectionCheckInterval);
+  }, [projectId]);
 
   // Epic management functions
   const handleCreateEpic = (newEpic) => {
