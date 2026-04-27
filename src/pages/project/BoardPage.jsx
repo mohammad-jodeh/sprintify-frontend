@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Board from "../../components/board/Board";
 import LoadingScreen from "../../components/ui/LoadingScreen";
 import { BoardSkeleton } from "../../components/ui/SkeletonLoader";
@@ -65,10 +65,14 @@ const BoardPage = () => {
       setIssues((prev) =>
         prev.filter((issue) => issue.id !== data.issueId)
       );
-      if (selectedIssue?.id === data.issueId) {
-        setIsIssueDetailsOpen(false);
-        setSelectedIssue(null);
-      }
+      // Close modal if deleted issue is currently selected
+      setSelectedIssue((prev) => {
+        if (prev?.id === data.issueId) {
+          setIsIssueDetailsOpen(false);
+          return null;
+        }
+        return prev;
+      });
     };
 
     // Handler for issue status changed
@@ -118,7 +122,7 @@ const BoardPage = () => {
       return () => clearTimeout(timer);
     }
 
-    // Cleanup on unmount
+    // Cleanup on unmount or projectId change
     return () => {
       console.log('📡 BoardPage: Cleaning up socket listeners for project:', projectId);
       socketService.leaveProject(projectId);
@@ -128,7 +132,7 @@ const BoardPage = () => {
       socketService.setOnIssueStatusChanged(null);
       socketService.setOnIssueAssigned(null);
     };
-  }, [projectId, setIssues, selectedIssue]);
+  }, [projectId]); // Only depend on projectId, not selectedIssue
 
   // Monitor socket connection state and rejoin project room if socket reconnects
   useEffect(() => {
