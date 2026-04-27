@@ -291,13 +291,19 @@ const Board = ({
   if (!hasRequiredData) {
     return (
       <div className="flex flex-col items-center justify-center h-screen space-y-4">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            No Board Data
+        <div className="text-center max-w-md">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
+            Board Not Ready
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            This project doesn't have any board columns configured yet.
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            This project doesn't have any board columns yet. Start by creating columns in the project settings to organize your tasks!
           </p>
+          <a 
+            href={`/projects/${window.location.pathname.split('/')[2]}/settings`}
+            className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Go to Settings
+          </a>
         </div>
       </div>
     );
