@@ -166,7 +166,7 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
                 <option value="issue_created">Issue Created</option>
                 <option value="priority_changed">Priority Changed</option>
                 <option value="assignee_changed">Assignee Changed</option>
-                <option value="due_date_approaching">Due Date Approaching</option>
+                <option value="due_date_approaching" disabled>Due Date Approaching (Coming Soon)</option>
               </select>
             </div>
 
@@ -252,7 +252,7 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
                 <option value="auto_transition">Auto-Transition to Status</option>
                 <option value="assign_user">Auto-Assign to User</option>
                 <option value="notify_user">Send Notification</option>
-                <option value="add_comment">Add Auto-Comment</option>
+                <option value="add_comment" disabled>Add Auto-Comment (Coming Soon)</option>
                 <option value="send_webhook">Send Webhook</option>
               </select>
             </div>
@@ -299,6 +299,43 @@ const CreateAutomationModal = ({ projectId, isOpen, onClose, onSave, rule = null
                   ))}
                 </select>
               </div>
+            )}
+
+            {/* Action Payload - Notify User */}
+            {formData.actionType === "notify_user" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Notify User
+                  </label>
+                  <select
+                    name="recipientId"
+                    value={formData.actionPayload.recipientId || ""}
+                    onChange={handleActionPayloadChange}
+                    className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="">Select User</option>
+                    {safeUsers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name || u.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Notification Message
+                  </label>
+                  <textarea
+                    name="message"
+                    value={formData.actionPayload.message || ""}
+                    onChange={handleActionPayloadChange}
+                    placeholder="Enter notification message"
+                    rows="3"
+                    className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+              </>
             )}
 
             {/* Action Payload - Comment */}
