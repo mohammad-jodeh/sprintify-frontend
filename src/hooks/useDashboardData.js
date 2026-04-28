@@ -35,21 +35,30 @@ export default function useDashboardData() {
         return;
       }
 
-      // Fetch issues from each project
+      // OPTIMIZATION: Fetch all project issues in parallel instead of sequentially
+      const issuePromises = projects.map((project) =>
+        fetchTasks(project.id)
+          .then((issues) => {
+            const issueArray = Array.isArray(issues) ? issues : (issues?.data || []);
+            return { project, issues: issueArray };
+          })
+          .catch((error) => {
+            console.error(`Failed to fetch issues for project ${project.id}:`, error);
+            return { project, issues: [] };
+          })
+      );
+
+      // Wait for all requests to complete
+      const results = await Promise.all(issuePromises);
+
+      // Process results
       const allIssues = [];
       const projectStats = {};
 
-      for (const project of projects) {
-        try {
-          const issues = await fetchTasks(project.id);
-          const issueArray = Array.isArray(issues) ? issues : (issues?.data || []);
-          allIssues.push(...issueArray);
-          projectStats[project.name] = issueArray.length;
-        } catch (error) {
-          console.error(`Failed to fetch issues for project ${project.id}:`, error);
-          projectStats[project.name] = 0;
-        }
-      }
+      results.forEach(({ project, issues }) => {
+        allIssues.push(...issues);
+        projectStats[project.name] = issues.length;
+      });
 
       // Calculate total issues
       setIssueCount(allIssues.length);

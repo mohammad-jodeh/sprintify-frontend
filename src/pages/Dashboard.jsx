@@ -1,10 +1,11 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import CustomPieChart from "../components/Charts/CustomPieChart";
 import CustomBarChart from "../components/Charts/CustomBarChart";
 import useDashboardData from "../hooks/useDashboardData";
 
 import StatusBadge from "../components/dashboard/StatusBadge";
 import ChartCard from "../components/dashboard/ChartCard";
+import ChartSkeleton from "../components/dashboard/ChartSkeleton";
 import RecentActivityItem from "../components/dashboard/RecentActivityItem";
 
 export default function Dashboard() {
@@ -41,25 +42,34 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ChartCard title="Issue Status Distribution">
-          {statusData.length === 0 ? (
-            <div className="text-sm text-gray-500 p-4">
-              No status data available
-            </div>
-          ) : (
-            <CustomPieChart data={statusData} />
-          )}
-        </ChartCard>
+        {loading ? (
+          <>
+            <ChartSkeleton height="h-80" />
+            <ChartSkeleton height="h-80" />
+          </>
+        ) : (
+          <>
+            <ChartCard title="Issue Status Distribution">
+              {statusData.length === 0 ? (
+                <div className="text-sm text-gray-500 p-4">
+                  No status data available
+                </div>
+              ) : (
+                <CustomPieChart data={statusData} />
+              )}
+            </ChartCard>
 
-        <ChartCard title="Issues per Project">
-          {projectIssueData.length === 0 ? (
-            <div className="text-sm text-gray-500 p-4">
-              No project data available
-            </div>
-          ) : (
-            <CustomBarChart data={projectIssueData} />
-          )}
-        </ChartCard>
+            <ChartCard title="Issues per Project">
+              {projectIssueData.length === 0 ? (
+                <div className="text-sm text-gray-500 p-4">
+                  No project data available
+                </div>
+              ) : (
+                <CustomBarChart data={projectIssueData} />
+              )}
+            </ChartCard>
+          </>
+        )}
       </div>
     </div>
   );
