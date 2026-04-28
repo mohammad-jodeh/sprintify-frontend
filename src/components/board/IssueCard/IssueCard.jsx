@@ -1,11 +1,18 @@
 import React, { useCallback, useMemo } from "react";
 import { getIssueColor } from "./IssueTypeUtils";
 import { useIssueCardDragDrop } from '../../../hooks/useIssueCardDragDrop';
+import useAuthStore from '../../../store/authstore';
 import IssueCardHeader from "./IssueCardHeader";
 import IssueCardTitle from './IssueCardTitle';
 import IssueCardFooter from './IssueCardFooter';
 
 const IssueCard = ({ issue, epics = [], onIssueClick }) => {
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUserId = currentUser?.id;
+
+  // Check if user can move this issue
+  const canMoveIssue = !issue.assignee || issue.assignee === currentUserId;
+  
   const {
     isDragging,
     dragStartHandler,
@@ -20,20 +27,23 @@ const IssueCard = ({ issue, epics = [], onIssueClick }) => {
   
   // Memoize classes to prevent recalculation on every render
   const cardClasses = useMemo(() => {
-    const baseClass = `bg-white dark:bg-gradient-card rounded-xl p-3 border ${getIssueColor(issue)} border-l-4 shadow-sm cursor-grab active:cursor-grabbing`;
+    const baseClass = `bg-white dark:bg-gradient-card rounded-xl p-3 border ${getIssueColor(issue)} border-l-4 shadow-sm ${
+      canMoveIssue ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed opacity-60'
+    }`;
     const dragClass = isDragging
       ? "ring-2 ring-primary shadow-lg z-50"
       : "hover:shadow-md dark:hover:shadow-gray-900/30 hover:shadow-lg";
     return `${baseClass} ${dragClass} transition-all duration-150 will-change-transform mb-3`;
-  }, [isDragging, issue]);
+  }, [isDragging, issue, canMoveIssue]);
   
   return (
     <div
       className={cardClasses}
       onClick={handleClick}
-      draggable="true"
-      onDragStart={dragStartHandler}
-      onDragEnd={dragEndHandler}
+      draggable={canMoveIssue}
+      onDragStart={canMoveIssue ? dragStartHandler : undefined}
+      onDragEnd={canMoveIssue ? dragEndHandler : undefined}
+      title={!canMoveIssue ? "This issue is assigned to another user. Only assigned users can move their issues." : ""}
       style={{
         transform: isDragging ? 'scale(1.05) rotate(2deg)' : 'scale(1) rotate(0deg)',
         transition: 'transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease-out',

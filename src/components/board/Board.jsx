@@ -4,11 +4,13 @@ import BoardContent from "./BoardContent";
 import SprintBoard from "./SprintBoard";
 import { useBoardStore } from "../../store/boardStore";
 import { useProjectRole } from "../../hooks/useProjectRole";
+import useAuthStore from "../../store/authstore";
 import { can, PERMISSIONS } from "../../utils/permission";
 import { updateTask } from "../../api/tasks";
 import { fetchBoardColumns } from "../../api/boardColumns";
 import { exportBoardAsPDF } from "../../utils/exportBoardAsPDF";
 import socketService from "../../services/socket";
+import toast from "react-hot-toast";
 
 const Board = ({
   boardData,
@@ -27,10 +29,12 @@ const Board = ({
   const storeFilters = useBoardStore((state) => state.filters);
   const storeSetFilters = useBoardStore((state) => state.setFilters);
 
+  // Get current user ID for permission checks
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUserId = currentUser?.id;
+
   // Add view toggle state - Kanban is now the default main view
   const [viewMode, setViewMode] = useState("kanban");
-
-  // Use props if provided, otherwise fall back to store
   const board = useMemo(() => {
     if (boardData && issues && statuses && columns) {
       // Structure real API data into board format
@@ -258,6 +262,20 @@ const Board = ({
         console.error("Project ID is not available");
         return;
       }
+
+      // Find the issue being moved
+      const issueBeingMoved = issues?.find(i => i.id === issueId);
+      if (!issueBeingMoved) {
+        console.error("Issue not found");
+        return;
+      }
+
+      // Check permission: user can only move issues assigned to them or unassigned issues
+      if (issueBeingMoved.assignee && issueBeingMoved.assignee !== currentUserId) {
+        toast.error("You can only move issues assigned to you or unassigned issues");
+        console.warn(`Permission denied: Issue ${issueId} is assigned to ${issueBeingMoved.assignee}, current user is ${currentUserId}`);
+        return;
+      }
       
       await updateTask(projectId, issueId, { statusId: targetStatusId });
 
@@ -272,8 +290,9 @@ const Board = ({
       }
     } catch (error) {
       console.error("Failed to move issue:", error);
+      toast.error("Failed to move issue");
     }
-  }, [board.project?.id, setIssues]);
+  }, [board.project?.id, setIssues, issues, currentUserId]);
 
   const handleExportBoardAsPDF = useCallback(async () => {
     try {
