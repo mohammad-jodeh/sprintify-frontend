@@ -80,7 +80,7 @@ const Column = ({
     }
   };
   return (
-    <div className="w-80 flex-shrink-0 animate-fade-in group">
+    <div className="w-96 flex-shrink-0 animate-fade-in group">
       <div className="relative bg-white/70 dark:bg-gradient-card backdrop-blur-xl rounded-2xl flex flex-col h-full shadow-2xl border border-white/30 dark:border-white/10 hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02] overflow-hidden">
         {/* Animated background gradients */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-custom-50/30 to-pink-50/50 dark:from-blue-900/20 dark:via-custom-900/10 dark:to-pink-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
