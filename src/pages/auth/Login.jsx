@@ -81,9 +81,9 @@ const Login = () => {
   return (
     <AuthLayout
       title="Sign in to your account"
-      subtitle="Or"
+      subtitle="Don't have an account?"
       subtitleLink="/register"
-      subtitleLinkText="create a new account"
+      subtitleLinkText="Sign up"
     >
       <form className="space-y-6" onSubmit={handleSubmit}>
         {errors.general && (

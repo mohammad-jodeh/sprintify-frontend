@@ -36,7 +36,7 @@ const AuthLayout = ({ children, title, subtitle, subtitleLink, subtitleLinkText 
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             {subtitle}{' '}
             {subtitleLink && (
-              <Link to={subtitleLink} className="font-medium text-primary hover:text-primary-hover">
+              <Link to={subtitleLink} className="font-medium text-primary hover:text-primary-hover hover:underline transition-colors duration-200">
                 {subtitleLinkText}
               </Link>
             )}
